@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}{{symbol}} · Luqman Trade{% endblock %}
+{% block content %}
+<section class="page terminal-page">
+  <div class="dashhead terminal-head"><div><a class="micro-link" href="/portfolio">{{ "← المحفظة" if u.language=="ar" else "← Portfolio" }}</a><h1>{{symbol}}</h1><p class="muted">{{ "الرسم البياني والمؤشرات والصفقات الخاصة بالسهم." if u.language=="ar" else "Chart, indicators and trade history for this symbol." }}</p></div>{% if position %}<span class="pill live">{{ "مملوك" if u.language=="ar" else "OWNED" }} · {{'%.4f'|format(position.qty)}} {{ "سهم" if u.language=="ar" else "shares" }}</span>{% endif %}</div>
+  <div class="stock-terminal">
+    <article class="terminal-chart-panel" id="stock-chart-root" data-symbol="{{symbol}}">
+      <div class="chart-toolbar"><div><small>{{symbol}} {{ "رسم السعر" if u.language=="ar" else "PRICE CHART" }}</small><h2>{{ "حركة السعر" if u.language=="ar" else "Price Movement" }}</h2><div class="chart-statusline"><strong data-chart-status>{{ "جارٍ التحميل…" if u.language=="ar" else "Loading…" }}</strong><span data-trend-label class="trend-badge flat">{{ "ثابت →" if u.language=="ar" else "Flat →" }}</span></div></div><div class="range-tabs"><button data-range="1D" class="active">1D</button><button data-range="5D">5D</button><button data-range="1M">1M</button><button data-range="3M">3M</button></div></div>
+      <div class="terminal-chart stock-chart"><svg aria-label="{{symbol}} candlestick chart"></svg><div class="chart-empty-copy">{{ "لا توجد بيانات كافية للرسم." if u.language=="ar" else "Not enough data for the chart." }}</div></div>
+      <div class="chart-foot"><span>{{ "شموع 5د / 15د / 1س / 1ي حسب المدة" if u.language=="ar" else "5m / 15m / 1h / 1d candles by range" }}</span><span>{{ "مصدر البيانات" if u.language=="ar" else "Feed" }}: Alpaca {{broker_mode}}</span></div>
+    </article>
+    <aside class="stock-inspector">
+      {% if position %}<div id="stock-position" class="owned-box"><small>{{ "صفقة مفتوحة" if u.language=="ar" else "OPEN POSITION" }}</small><b data-pnl class="{{'pos' if position.unrealized_pl>=0 else 'neg'}}">${{'%+.2f'|format(position.unrealized_pl)}}</b><div><span data-entry>{{ "الدخول" if u.language=="ar" else "Entry" }} ${{'%.2f'|format(position.avg_entry_price)}}</span><span data-current>{{ "الآن" if u.language=="ar" else "Now" }} ${{'%.2f'|format(position.current_price)}}</span></div></div>{% endif %}
+      <article id="stock-technical" class="indicator-detail" data-symbol="{{symbol}}"><div class="cardhead"><h2>{{ "القراءة الفنية" if u.language=="ar" else "Technical Read" }}</h2>{% if indicator.available %}<span data-verdict class="verdict {{indicator.verdict|lower}}">{{code_label(indicator.verdict,u.language)}}</span>{% endif %}</div>
+        {% if indicator.available %}
+        <div class="big-score"><b data-score>{{'%.0f'|format(indicator.score)}}</b><span>/100 {{ "درجة الإشارة" if u.language=="ar" else "Signal Score" }}</span></div>
+        <div class="indicator-list"><span>EMA 9 <b data-k="ema9">{{'%.2f'|format(indicator.ema9)}}</b></span><span>EMA 20 <b data-k="ema20">{{'%.2f'|format(indicator.ema20)}}</b></span><span>EMA 50 <b data-k="ema50">{{'%.2f'|format(indicator.ema50)}}</b></span><span>RSI 14 <b data-k="rsi14">{{'%.1f'|format(indicator.rsi14)}}</b></span><span>MACD <b data-k="macd">{{'%.3f'|format(indicator.macd)}}</b></span><span>ADX 14 <b data-k="adx14">{{'%.1f'|format(indicator.adx14)}}</b></span><span>VWAP <b data-k="vwap">${{'%.2f'|format(indicator.vwap)}}</b></span><span>ATR 14 <b data-k="atr14">{{'%.2f'|format(indicator.atr14)}}</b></span><span>RVOL <b data-k="rel_volume">{{'%.2f'|format(indicator.rel_volume)}}x</b></span><span>Momentum <b data-k="momentum_5">{{'%+.2f'|format(indicator.momentum_5)}}%</b></span></div><div class="signal-life" data-life><b>{{ 'حالة الإشارة' if u.language=='ar' else 'Signal Lifecycle' }}:</b><span data-life-state>—</span><span data-life-trend>→</span></div><p data-execution class="execution-state">{{ 'جاري فحص جاهزية التنفيذ…' if u.language=='ar' else 'Checking execution readiness…' }}</p>
+        {% else %}<div class="empty">{{ "شغّل فحصاً لإظهار المؤشرات." if u.language=="ar" else "Run a scan to populate indicators." }}</div>{% endif %}
+      </article>
+    </aside>
+  </div>
+  <article><h2>{{symbol}} {{ "سجل التداول" if u.language=="ar" else "Trade History" }}</h2><div class="table"><table><tr><th>{{ "وقت الفتح" if u.language=="ar" else "Opened" }}</th><th>{{ "الحالة" if u.language=="ar" else "Status" }}</th><th>{{ "الكمية" if u.language=="ar" else "Qty" }}</th><th>{{ "الدخول" if u.language=="ar" else "Entry" }}</th><th>{{ "الخروج" if u.language=="ar" else "Exit" }}</th><th>{{ "الربح/الخسارة" if u.language=="ar" else "P&L" }}</th><th>{{ "السبب" if u.language=="ar" else "Reason" }}</th></tr>{% for t in trades %}<tr><td>{{t.opened_at.strftime('%m-%d %H:%M') if t.opened_at else '—'}}</td><td>{{code_label(t.status,u.language)}}</td><td>{{'%.2f'|format(t.qty)}}</td><td>${{'%.2f'|format(t.entry)}}</td><td>{{'—' if not t.exit else '$%.2f'|format(t.exit)}}</td><td class="{{'pos' if t.pnl>=0 else 'neg'}}">${{'%+.2f'|format(t.pnl)}}</td><td>{{code_label(t.reason,u.language)}}</td></tr>{% else %}<tr><td colspan="7" class="empty">{{ "لا توجد صفقات لهذا الرمز بعد." if u.language=="ar" else "No trades for this symbol yet." }}</td></tr>{% endfor %}</table></div></article>
+</section>
+{% endblock %}
+{% block scripts %}<script src="/static/charts.js"></script><script>
+LTCharts.wireStock(document.getElementById('stock-chart-root'),'{{symbol}}');
+(function(){
+  const symbol='{{symbol}}', lang='{{u.language}}', root=document.getElementById('stock-technical');
+  const n=(v,d=2)=>Number(v||0).toFixed(d);
+  function render(x){if(!root||!x)return;const v=root.querySelector('[data-verdict]');if(v){const ar={WAIT:'انتظار',WATCH:'مراقبة',QUALIFIED:'مؤهلة'};v.textContent=lang==='ar'?(ar[x.verdict]||x.verdict):x.verdict;v.className='verdict '+String(x.verdict).toLowerCase();}const sc=root.querySelector('[data-score]');if(sc)sc.textContent=Math.round(Number(x.score||0));
+    const fmts={ema9:v=>n(v),ema20:v=>n(v),ema50:v=>n(v),rsi14:v=>n(v,1),macd:v=>n(v,3),adx14:v=>n(v,1),vwap:v=>'$'+n(v),atr14:v=>n(v),rel_volume:v=>n(v)+'x',momentum_5:v=>(Number(v)>=0?'+':'')+n(v)+'%'};
+    Object.entries(fmts).forEach(([k,f])=>{const e=root.querySelector(`[data-k="${k}"]`);if(e)e.textContent=f(x[k]);});
+    const ex=root.querySelector('[data-execution]');if(ex&&x.execution){ex.textContent=lang==='ar'?x.execution.message_ar:x.execution.message_en;ex.className='execution-state '+(x.execution.ok?'ready':'blocked');}if(x.lifecycle){const ls=root.querySelector('[data-life-state]'),lt=root.querySelector('[data-life-trend]');if(ls)ls.textContent=x.lifecycle.state;if(lt)lt.textContent=lang==='ar'?(x.lifecycle.trend==='up'?'↑ تتحسن':x.lifecycle.trend==='down'?'↓ تضعف':'→ مستقرة'):(x.lifecycle.trend==='up'?'↑ Improving':x.lifecycle.trend==='down'?'↓ Weakening':'→ Stable');}
+  }
+  async function update(){try{const r=await fetch('/api/live/dashboard',{cache:'no-store'}),d=await r.json();render((d.indicators||[]).find(x=>x.symbol===symbol));const pos=(d.broker?.position_rows||[]).find(x=>x.symbol===symbol),box=document.getElementById('stock-position');if(box&&pos){const p=box.querySelector('[data-pnl]');p.textContent=(pos.unrealized_pl>=0?'+':'')+'$'+Math.abs(pos.unrealized_pl).toFixed(2);p.className=pos.unrealized_pl>=0?'pos':'neg';box.querySelector('[data-current]').textContent=(lang==='ar'?'الآن $':'Now $')+pos.current_price.toFixed(2);}}catch(e){}}
+  async function updateIndicators(){try{const r=await fetch('/api/live/indicators',{cache:'no-store'}),d=await r.json();render((d.indicators||[]).find(x=>x.symbol===symbol));}catch(e){}}
+  update();setInterval(update,5000);setTimeout(updateIndicators,1200);setInterval(updateIndicators,30000);
+})();
+</script>{% endblock %}

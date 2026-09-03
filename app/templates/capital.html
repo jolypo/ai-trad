@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'التحكم برأس المال' if u.language=='ar' else 'Capital Control' }} · Luqman Trade{% endblock %}
+{% block page_label %}{{ 'بياناتي / التحكم برأس المال' if u.language=='ar' else 'My Data / Capital Control' }}{% endblock %}
+{% block content %}
+<section class="page control-page capital-control-page">
+  <div class="dashhead"><div><span class="eyebrow">{{ 'مصدر الحقيقة المالي' if u.language=='ar' else 'CAPITAL SOURCE OF TRUTH' }}</span><h1>{{ 'التحكم برأس المال' if u.language=='ar' else 'Capital Control' }}</h1><p class="muted">{{ 'اختر مقدار النقد الذي تسمح للنظام باستخدامه، ثم اختر خطة توزيع جاهزة أو تحكم يدوي كامل.' if u.language=='ar' else 'Choose how much broker cash Luqman may use, then select a ready allocation plan or full manual control.' }}</p></div></div>
+
+  <section class="capital-hero-grid">
+    <div class="metric hero-metric"><small>{{ 'رأس المال المستهدف للبوت' if u.language=='ar' else 'Target Bot Capital' }}</small><b data-cap-target data-cap-allocated>$ {{'%.2f'|format(budget.target)}}</b><span>{{ 'السقف الذي حدده المستخدم' if u.language=='ar' else 'User-authorized ceiling' }}</span></div>
+    <div class="metric hero-metric"><small>{{ 'رأس مال البوت الحالي' if u.language=='ar' else 'Current Bot Capital' }}</small><b data-cap-current>$ {{'%.2f'|format(budget.current)}}</b><span>{{ 'يتأثر فقط بنتائج Luqman وتغييراتك اليدوية' if u.language=='ar' else 'Changes only from Luqman results and explicit user edits' }}</span></div>
+    <div class="metric"><small>{{ 'الاحتياطي النقدي' if u.language=='ar' else 'Cash Reserve' }}</small><b data-cap-reserve>$ {{'%.2f'|format(budget.reserve)}}</b><span>{{'%.1f'|format(budget.reserve_pct)}}%</span></div>
+    <div class="metric"><small>{{ 'المستخدم في المراكز' if u.language=='ar' else 'Capital Used in Open Positions' }}</small><b data-cap-invested>$ {{'%.2f'|format(budget.invested)}}</b></div>
+    <div class="metric"><small>{{ 'محجوز للأوامر' if u.language=='ar' else 'Reserved for Pending Orders' }}</small><b data-cap-reserved>$ {{'%.2f'|format(budget.reserved)}}</b></div>
+    <div class="metric"><small>{{ 'متاح لصفقات جديدة' if u.language=='ar' else 'Available for New Trades' }}</small><b class="pos" data-cap-available>$ {{'%.2f'|format(budget.available)}}</b></div>
+    <div class="metric profit-split-card"><small>{{ 'أرباح الأسهم / العقود' if u.language=='ar' else 'Stocks / Options P&L' }}</small><b data-cap-profit-total class="{{'pos' if budget.stocks_options_realized_pnl>=0 else 'neg'}}">$ {{'%+.2f'|format(budget.stocks_options_realized_pnl)}}</b><span class="profit-split-lines"><span>{{'الأسهم' if u.language=='ar' else 'Stocks'}} <strong data-cap-profit-stocks class="{{'pos' if budget.stocks_realized_pnl>=0 else 'neg'}}">$ {{'%+.2f'|format(budget.stocks_realized_pnl)}}</strong></span><span>{{'العقود' if u.language=='ar' else 'Options'}} <strong data-cap-profit-options class="{{'pos' if budget.options_realized_pnl>=0 else 'neg'}}">$ {{'%+.2f'|format(budget.options_realized_pnl)}}</strong></span></span><span class="muted">{{'الإجمالي = الأسهم + العقود' if u.language=='ar' else 'Total = Stocks + Options'}}</span></div>
+    <div class="metric"><small>{{ 'نقد الوسيط' if u.language=='ar' else 'Broker Cash' }}</small><b data-cap-broker-cash>{{ ('$ %.2f'|format(broker.account.cash)) if broker.connected else '—' }}</b><span>{{ 'معلومة ثانوية — ليست ميزانية Luqman' if u.language=='ar' else 'Secondary information — not Luqman budget' }}</span></div>
+  </section>
+
+  <form method="post" action="/capital" class="capital-plan-form" id="capital-plan-form">
+    <article class="capital-source-card">
+      <div class="cardhead"><div><h2>{{ '1. حدد رأس المال' if u.language=='ar' else '1. Set Capital' }}</h2><p class="muted">{{ 'لا يحق للنظام استخدام أكثر من هذا المبلغ حتى لو كانت القوة الشرائية أكبر.' if u.language=='ar' else 'Luqman cannot use more than this amount even if broker buying power is larger.' }}</p></div></div>
+      <div class="capital-source-grid">
+        <label>{{ 'رأس المال المسموح للنظام' if u.language=='ar' else 'Allocated Capital' }}<input class="numeric-input" type="number" name="allocated_capital" min="1" step="0.01" value="{{s.capital}}"><small>{{ 'مثال: نقد الوسيط $ 1,000 وتسمح للنظام باستخدام $ 500 فقط.' if u.language=='ar' else 'Example: broker cash is $ 1,000 but Luqman may use only $ 500.' }}</small></label>
+        <label>{{ 'الاحتياطي النقدي %' if u.language=='ar' else 'Cash Reserve %' }}<input class="numeric-input" type="number" name="cash_reserve_pct" min="0" max="95" step="0.5" value="{{s.cash_reserve_pct}}"><small>{{ 'جزء محفوظ لا يدخل في صفقات جديدة.' if u.language=='ar' else 'A protected portion not used for new entries.' }}</small></label>
+      </div>
+    </article>
+
+    {% set mode = 'opportunity' if s.allocation_mode=='dynamic' else ('manual' if s.allocation_mode=='fixed' else s.allocation_mode) %}
+    <article class="capital-plans-card">
+      <div class="cardhead"><div><h2>{{ '2. اختر طريقة التوزيع' if u.language=='ar' else '2. Choose Allocation Plan' }}</h2><p class="muted">{{ 'خطط جاهزة لمن يريد إعدادًا سريعًا، أو اختر «يدوي» لتحدد النسب بنفسك.' if u.language=='ar' else 'Use a ready plan for quick setup, or choose Manual to set the percentages yourself.' }}</p></div><span class="badge" data-plan-badge></span></div>
+      <div class="allocation-plan-grid">
+        <label class="plan-card"><input type="radio" name="allocation_mode" value="opportunity" {% if mode=='opportunity' %}checked{% endif %}><span class="plan-check">✓</span><b>{{ 'مرن حسب الفرصة' if u.language=='ar' else 'Opportunity Pool' }}</b><small>{{ 'الأسهم والعقود تشترك في نفس المبلغ المتاح. الأفضل عندما تريد أن يأخذ المال أفضل فرصة أولاً.' if u.language=='ar' else 'Stocks and options share one available pool. Best when you want the strongest opportunity to use capital first.' }}</small><em>{{ 'بدون حجز ثابت لكل قسم' if u.language=='ar' else 'No fixed engine bucket' }}</em></label>
+        <label class="plan-card"><input type="radio" name="allocation_mode" value="stocks_only" {% if mode=='stocks_only' %}checked{% endif %}><span class="plan-check">✓</span><b>{{ 'أسهم فقط' if u.language=='ar' else 'Stocks Only' }}</b><small>{{ 'كل رأس المال القابل للتداول مخصص للأسهم، والعقود للمراقبة فقط.' if u.language=='ar' else 'All usable trading capital is assigned to stocks; options stay monitor-only.' }}</small><em>100% / 0%</em></label>
+        <label class="plan-card"><input type="radio" name="allocation_mode" value="balanced" {% if mode=='balanced' %}checked{% endif %}><span class="plan-check">✓</span><b>{{ 'متوازن' if u.language=='ar' else 'Balanced' }}</b><small>{{ 'نصف رأس المال القابل للاستخدام للأسهم ونصفه للعقود.' if u.language=='ar' else 'Half of usable capital for stocks and half for options.' }}</small><em>50% / 50%</em></label>
+        <label class="plan-card"><input type="radio" name="allocation_mode" value="stocks_focus" {% if mode=='stocks_focus' %}checked{% endif %}><span class="plan-check">✓</span><b>{{ 'تركيز أسهم' if u.language=='ar' else 'Stocks Focus' }}</b><small>{{ 'مناسب لمن يريد أغلب رأس المال للأسهم مع حصة أصغر للعقود.' if u.language=='ar' else 'Most capital is reserved for stocks with a smaller options bucket.' }}</small><em>70% / 30%</em></label>
+        <label class="plan-card"><input type="radio" name="allocation_mode" value="options_focus" {% if mode=='options_focus' %}checked{% endif %}><span class="plan-check">✓</span><b>{{ 'تركيز عقود' if u.language=='ar' else 'Options Focus' }}</b><small>{{ 'مناسب لمن يريد حصة أكبر للعقود وحصة أصغر للأسهم.' if u.language=='ar' else 'A larger options bucket with a smaller stock bucket.' }}</small><em>30% / 70%</em></label>
+        <label class="plan-card"><input type="radio" name="allocation_mode" value="options_only" {% if mode=='options_only' %}checked{% endif %}><span class="plan-check">✓</span><b>{{ 'عقود فقط' if u.language=='ar' else 'Options Only' }}</b><small>{{ 'كل رأس المال القابل للتداول مخصص للعقود، والأسهم للمراقبة فقط.' if u.language=='ar' else 'All usable trading capital is assigned to options; stocks stay monitor-only.' }}</small><em>0% / 100%</em></label>
+        <label class="plan-card manual-plan"><input type="radio" name="allocation_mode" value="manual" {% if mode=='manual' %}checked{% endif %}><span class="plan-check">✓</span><b>{{ 'يدوي' if u.language=='ar' else 'Manual' }}</b><small>{{ 'أنت تحدد نسب الأسهم والعقود بنفسك.' if u.language=='ar' else 'You define stock and options percentages yourself.' }}</small><em>{{ 'تحكم كامل' if u.language=='ar' else 'Full control' }}</em></label>
+      </div>
+
+      <div class="manual-allocation-panel" id="manual-allocation-panel">
+        <div><b>{{ 'التوزيع اليدوي' if u.language=='ar' else 'Manual Allocation' }}</b><small>{{ 'يظهر فقط عند اختيار «يدوي». يجب أن يكون مجموع الأسهم والعقود 100% بالضبط.' if u.language=='ar' else 'Used only in Manual mode. Stocks + options must equal exactly 100%.' }}</small></div>
+        <div class="manual-allocation-fields">
+          <label>{{ 'الأسهم %' if u.language=='ar' else 'Stocks %' }}<input id="manual-stocks-range" type="range" name="stocks_allocation_pct" min="0" max="100" step="1" value="{{s.stocks_allocation_pct}}"><b id="manual-stocks-value">{{'%.0f'|format(s.stocks_allocation_pct)}}%</b></label>
+          <label>{{ 'العقود %' if u.language=='ar' else 'Options %' }}<input id="manual-options-value" class="numeric-input" type="number" name="options_allocation_pct" min="0" max="100" step="1" value="{{s.options_allocation_pct}}" readonly></label>
+        </div>
+      </div>
+      <button class="btn capital-save-btn">{{ 'حفظ خطة رأس المال' if u.language=='ar' else 'Save Capital Plan' }}</button>
+    </article>
+  </form>
+
+  <article class="capital-live-state">
+    <div class="cardhead"><div><h2>{{ 'كيف يُستخدم المال الآن' if u.language=='ar' else 'How Capital Is Used Now' }}</h2><p class="muted">{{ 'المحرك يحتسب الاستثمار الفعلي + الأوامر المحجوزة + الاحتياطي قبل السماح بأي صفقة جديدة.' if u.language=='ar' else 'The engine accounts for invested exposure, pending reservations and cash reserve before approving any new order.' }}</p></div></div>
+    <div class="allocation-bars">
+      <div data-cap-engine="stocks"><div class="bar-label"><span>{{ 'الأسهم' if u.language=='ar' else 'Stocks' }}</span><b data-cap-used-cap>$ {{'%.2f'|format(budget.allocation.stocks_current)}} / $ {{'%.2f'|format(budget.allocation.stocks_target)}}</b></div><div class="alloc-bar"><i data-cap-bar style="width:{{ [100,(budget.allocation.stocks_used/(budget.allocation.stocks_cap or 1))*100]|min }}%"></i></div><small>{{ 'متاح للأسهم' if u.language=='ar' else 'Stocks available' }}: <span data-cap-engine-available>$ {{'%.2f'|format(budget.allocation.stocks_available)}}</span></small></div>
+      <div data-cap-engine="options"><div class="bar-label"><span>{{ 'العقود' if u.language=='ar' else 'Options' }}</span><b data-cap-used-cap>$ {{'%.2f'|format(budget.allocation.options_current)}} / $ {{'%.2f'|format(budget.allocation.options_target)}}</b></div><div class="alloc-bar options"><i data-cap-bar style="width:{{ [100,(budget.allocation.options_used/(budget.allocation.options_cap or 1))*100]|min }}%"></i></div><small>{{ 'متاح للعقود' if u.language=='ar' else 'Options available' }}: <span data-cap-engine-available>$ {{'%.2f'|format(budget.allocation.options_available)}}</span></small></div>
+    </div>
+    <div class="logic-note"><b>{{ 'قاعدة عدم التجاوز' if u.language=='ar' else 'No-Overspend Rule' }}</b><p>{{ 'المسموح النهائي لأي أمر = الأقل من: رأس المال المتبقي داخل Luqman، نقد الوسيط، حصة القسم إن وجدت، وحدود المخاطر. لذلك إذا المتاح $ 500 فلن يسمح النظام بأمر يجعل الالتزام $ 500.01.' if u.language=='ar' else 'Final order allowance is the minimum of remaining Luqman capital, broker cash, engine bucket when applicable, and risk limits. If $ 500 is available, an order that makes committed capital $ 500.01 is rejected.' }}</p></div>
+  </article>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+(()=>{
+  const form=document.getElementById('capital-plan-form'); if(!form)return;
+  const manualRange=document.getElementById('manual-stocks-range'), manualOptions=document.getElementById('manual-options-value'), manualValue=document.getElementById('manual-stocks-value');
+  const syncManual=()=>{if(!manualRange||!manualOptions)return;const n=Math.max(0,Math.min(100,Number(manualRange.value||0)));manualOptions.value=(100-n).toFixed(0);if(manualValue)manualValue.textContent=n.toFixed(0)+'%';};
+  manualRange?.addEventListener('input',syncManual);syncManual();
+  const panel=document.getElementById('manual-allocation-panel');
+  const cards=[...form.querySelectorAll('.plan-card')];
+  const badge=document.querySelector('[data-plan-badge]');
+  const labels={opportunity:'{{ 'مرن حسب الفرصة' if u.language=='ar' else 'Opportunity Pool' }}',stocks_only:'{{ 'أسهم فقط' if u.language=='ar' else 'Stocks Only' }}',balanced:'{{ 'متوازن' if u.language=='ar' else 'Balanced' }}',stocks_focus:'{{ 'تركيز أسهم' if u.language=='ar' else 'Stocks Focus' }}',options_focus:'{{ 'تركيز عقود' if u.language=='ar' else 'Options Focus' }}',options_only:'{{ 'عقود فقط' if u.language=='ar' else 'Options Only' }}',manual:'{{ 'يدوي' if u.language=='ar' else 'Manual' }}'};
+  const presetSplit={stocks_only:[100,0],balanced:[50,50],stocks_focus:[70,30],options_focus:[30,70],options_only:[0,100]};
+  const stockInput=form.elements.stocks_allocation_pct, optionInput=form.elements.options_allocation_pct;
+  const sync=()=>{const checked=form.querySelector('input[name="allocation_mode"]:checked');const mode=checked?.value||'opportunity';cards.forEach(c=>c.classList.toggle('selected',c.querySelector('input').checked));panel.hidden=mode!=='manual';if(badge)badge.textContent=labels[mode]||mode;};
+  form.querySelectorAll('input[name="allocation_mode"]').forEach(x=>x.addEventListener('change',sync));sync();
+  const money=n=>'$ '+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  function renderBudget(data){const b=data?.budget;if(!b)return;const set=(q,v)=>{const e=document.querySelector(q);if(e)e.textContent=v;};set('[data-cap-broker-cash]',data.broker_cash==null?'—':money(data.broker_cash));set('[data-cap-target]',money(b.target));set('[data-cap-allocated]',money(b.target));set('[data-cap-current]',money(b.current));set('[data-cap-reserve]',money(b.reserve));const signed=n=>(Number(n||0)>=0?'+$ ':'-$ ')+Math.abs(Number(n||0)).toFixed(2);const setP=(q,v)=>{const e=document.querySelector(q);if(e){e.textContent=signed(v);e.className=Number(v||0)>=0?'pos':'neg';}};setP('[data-cap-profit-stocks]',b.stocks_realized_pnl);setP('[data-cap-profit-options]',b.options_realized_pnl);setP('[data-cap-profit-total]',b.stocks_options_realized_pnl);set('[data-cap-invested]',money(b.invested));set('[data-cap-reserved]',money(b.reserved));set('[data-cap-available]',money(b.available));const alloc=b.allocation||{};['stocks','options'].forEach(engine=>{const box=document.querySelector(`[data-cap-engine="${engine}"]`);if(!box)return;const used=Number(alloc[`${engine}_used`]||0),cap=Number(alloc[`${engine}_cap`]||0),available=Number(alloc[`${engine}_available`]||0);const uc=box.querySelector('[data-cap-used-cap]'),av=box.querySelector('[data-cap-engine-available]'),bar=box.querySelector('[data-cap-bar]');if(uc){const cur=Number(alloc[`${engine}_current`]||0),target=Number(alloc[`${engine}_target`]||0);uc.textContent=`${money(cur)} / ${money(target)}`;}if(av)av.textContent=money(available);if(bar)bar.style.width=`${Math.max(0,Math.min(100,cap?used/cap*100:0))}%`;});}
+  async function refreshCapital(){try{const r=await fetch('/api/live/capital',{cache:'no-store'});if(r.ok)renderBudget(await r.json());}catch(e){}}
+  refreshCapital();setInterval(()=>{if(!document.hidden)refreshCapital()},5000);
+})();
+</script>
+{% endblock %}

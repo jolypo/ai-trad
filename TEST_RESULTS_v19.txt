@@ -1,0 +1,14 @@
+Luqman Trade v19 final validation
+================================
+pytest: 96 passed
+python -m compileall: PASS
+Jinja template parse: 15/15 PASS
+JavaScript syntax (app/static/charts.js): PASS
+Restart/schedule regression tests: PASS
+- scheduled stock resume inside window
+- scheduled options resume inside window
+- manual mode remains off
+- pre-close cutoff blocks restart
+- start delay respected
+- closed market blocks restart
+External Alpaca/Render restart integration: NOT TESTABLE LOCALLY

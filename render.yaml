@@ -1,0 +1,41 @@
+databases:
+  - name: luqman-trade-db
+    plan: free
+    databaseName: luqman_trade
+    user: luqman_trade
+
+services:
+  - type: web
+    name: luqman-trade
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: luqman-trade-db
+          property: connectionString
+      - key: BROKER_MODE
+        value: alpaca_market_paper
+      - key: ALPACA_TRADING_BASE_URL
+        value: https://paper-api.alpaca.markets
+      - key: ALPACA_DATA_FEED
+        value: iex
+      - key: MIN_SIGNAL_SCORE
+        value: "70"
+      - key: MAX_OPEN_POSITIONS
+        value: "1"
+      - key: MIN_SECONDS_BETWEEN_TRADES
+        value: "600"
+      - key: ENFORCE_MARKET_HOURS
+        value: "true"
+      - key: BOT_TICK_SECONDS
+        value: "300"
+      - key: REALTIME_SYNC_SECONDS
+        value: "5"
+      - key: MAX_DAILY_LOSS_HARD_CAP
+        value: "10"

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'إضافة المؤشرات' if u.language=='ar' else 'Indicator Studio' }} · Luqman Trade{% endblock %}
+{% block page_label %}{{ 'إضافة المؤشرات' if u.language=='ar' else 'Indicator Studio' }}{% endblock %}
+{% block content %}
+<section class="page">
+<div class="dashhead">
+    <div><h1>{{ 'إضافة المؤشرات' if u.language=='ar' else 'Indicator Studio' }}</h1><p class="muted">{{ 'مؤشرات النظام الأساسية + مؤشراتك الخاصة مع استيراد Pine Script وفحص التحويل.' if u.language=='ar' else 'Built-in system indicators plus your custom indicators, with Pine Script import and conversion validation.' }}</p></div>
+    <a class="ghost" href="/dashboard">{{ 'العودة للوحة التحكم' if u.language=='ar' else 'Back to Dashboard' }}</a>
+  </div>
+
+  <article>
+    <div class="cardhead"><div><h2>{{ 'مؤشرات النظام الافتراضية' if u.language=='ar' else 'Built-in System Indicators' }}</h2><p class="muted">{{ 'هذه المؤشرات هي أساس محرك الإشارة الحالي ولا تحتاج لإضافتها يدويًا.' if u.language=='ar' else 'These are the built-in indicators used by the current signal engine and do not need to be imported.' }}</p></div><span class="badge">9</span></div>
+    <div class="indicator-grid compact-grid">
+      {% set builtins = [
+        ('EMA 9/20/50','الاتجاه والترتيب السعري','Trend alignment'),('RSI 14','الزخم والتشبع','Momentum / overbought-oversold'),('MACD 12/26/9','زخم واتجاه','Momentum / trend'),
+        ('VWAP','موضع السعر داخل الجلسة','Intraday price location'),('ATR 14','التذبذب وحساب الوقف','Volatility / stop sizing'),('ADX 14','قوة الاتجاه','Trend strength'),
+        ('RVOL','الحجم النسبي','Relative volume'),('Momentum 5','الزخم القصير','Short momentum'),('Signal Score','تجميع قواعد الاستراتيجية','Strategy rule aggregation') ] %}
+      {% for name,ar,en in builtins %}<div class="indicator-card"><b>{{name}}</b><p class="micro">{{ar if u.language=='ar' else en}}</p><span class="verdict qualified">{{ 'مدمج' if u.language=='ar' else 'BUILT-IN' }}</span></div>{% endfor %}
+    </div>
+  </article>
+
+  <div class="notice"><b>{{ 'استيراد TradingView / Pine Script' if u.language=='ar' else 'TradingView / Pine Script Import' }}</b><br>{{ 'ارفع ملف .pine أو الصق الكود الذي تملك حق استخدامه. النظام يحوله إلى Python ضمن مجموعة وظائف آمنة، ثم يعرض حالة التحويل. أي كود غير مكتمل يبقى للعرض فقط ولا يؤثر على التداول.' if u.language=='ar' else 'Upload a .pine file or paste Pine code you are entitled to use. The system converts a safe supported subset to Python and reports the result. Incomplete imports remain display-only and cannot affect trading.' }}</div>
+
+  <div class="twocol">
+    <article><h2>{{ 'إضافة مؤشر مخصص' if u.language=='ar' else 'Add Custom Indicator' }}</h2>
+      <form method="post" action="/indicators" enctype="multipart/form-data" class="form-grid">
+        <label>{{ 'اسم المؤشر' if u.language=='ar' else 'Indicator Name' }}<input name="name" maxlength="120" required></label>
+        <label>{{ 'نوع المصدر' if u.language=='ar' else 'Source Type' }}<select name="source_type"><option value="pine_reference">TradingView / Pine Script</option><option value="luqman_native">Luqman Native</option><option value="manual_rules">{{ 'قواعد يدوية' if u.language=='ar' else 'Manual Rules' }}</option></select></label>
+        <label>{{ 'الدور' if u.language=='ar' else 'Role' }}<select name="role"><option value="display">{{ 'عرض فقط' if u.language=='ar' else 'Display only' }}</option><option value="confirm">{{ 'تأكيد الإشارة' if u.language=='ar' else 'Signal confirmation' }}</option><option value="filter">{{ 'فلتر دخول' if u.language=='ar' else 'Entry filter' }}</option></select></label>
+        <label>{{ 'وزن المؤشر' if u.language=='ar' else 'Score Weight' }}<input type="number" name="weight" min="0" max="100" step="1" value="0"><small>{{ '0 يعني لا يغير الدرجة.' if u.language=='ar' else '0 means it does not change the score.' }}</small></label>
+        <label>{{ 'الإطار الزمني' if u.language=='ar' else 'Timeframe' }}<select name="timeframe"><option>1m</option><option selected>5m</option><option>15m</option><option>1h</option><option>1d</option></select></label>
+        <label>{{ 'رفع ملف Pine' if u.language=='ar' else 'Upload Pine File' }}<input type="file" name="pine_file" accept=".pine,.txt,text/plain"><small>{{ 'اختياري، وبحد أقصى 300KB.' if u.language=='ar' else 'Optional, up to 300KB.' }}</small></label>
+        <label class="wide">{{ 'الأصول التي يعمل عليها' if u.language=='ar' else 'Symbols / Indices to Apply' }}<div class="stockgrid">{% for x in watch %}<label class="stockchip"><input type="checkbox" name="symbols" value="{{x}}">{{x}}</label>{% endfor %}</div><small>{{ 'إذا لم تحدد شيئًا: جميع الأصول المسموحة. ويمكن اختيار SPX لإرفاق مؤشر TradingView به.' if u.language=='ar' else 'Leave empty to apply to all allowed symbols.' }}</small></label>
+        <label class="wide">{{ 'كود Pine Script' if u.language=='ar' else 'Pine Script Code' }}<textarea name="source_code" rows="14" placeholder="//@version=6&#10;indicator(...)"></textarea></label>
+        <label class="form-switch"><input type="checkbox" name="enabled" checked> {{ 'مفعّل بعد نجاح الفحص' if u.language=='ar' else 'Enable after successful validation' }}</label>
+        <button class="btn">{{ 'استيراد وفحص المؤشر' if u.language=='ar' else 'Import & Validate Indicator' }}</button>
+      </form>
+    </article>
+
+    <article><h2>{{ 'المؤشرات المحفوظة' if u.language=='ar' else 'Saved Indicators' }} <span class="badge">{{rows|length}}</span></h2>
+      {% for x in rows %}
+      <div class="indicator-manager-row">
+        <div class="minw0"><b>{{x.name}}</b><small>{{x.timeframe}} · {{code_label(x.role,u.language)}} · {{ 'الوزن' if u.language=='ar' else 'weight' }} {{x.weight}}</small>
+          <p class="micro">{{ 'الأسهم: ' if u.language=='ar' else 'Symbols: ' }}{{ 'الكل' if x.symbols=='*' and u.language=='ar' else ('All' if x.symbols=='*' else x.symbols) }}</p>
+          <div class="compile-state {{x.compile_status|lower}}"><b>{% if x.compile_status=='COMPLETE' %}✅{% elif x.compile_status=='ERROR' %}❌{% else %}⚠️{% endif %} {{ 'حالة التحويل' if u.language=='ar' else 'Conversion' }}: {{code_label(x.compile_status,u.language)}}</b><span>{{ 'الدعم' if u.language=='ar' else 'Supported' }} {{'%.1f'|format(x.supported_pct)}}%</span><progress value="{{x.compile_progress}}" max="100" aria-label="{{ 'نسبة اكتمال التحويل' if u.language=='ar' else 'Conversion progress' }}"></progress><span>{{x.compile_progress}}%</span></div>
+          {% if x.compile_error %}<details><summary>{{ 'التفاصيل' if u.language=='ar' else 'Details' }}</summary><pre class="compile-log">{{x.compile_error}}</pre></details>{% endif %}
+        </div>
+        <div class="session-actions"><a class="ghost mini" href="/indicators/{{x.id}}/edit">{{ 'تعديل' if u.language=='ar' else 'Edit' }}</a><form method="post" action="/indicators/{{x.id}}/toggle"><button class="ghost mini">{{ ('إيقاف' if x.enabled else 'تشغيل') if u.language=='ar' else ('Disable' if x.enabled else 'Enable') }}</button></form><form method="post" action="/indicators/{{x.id}}/delete" onsubmit="return confirm('{{ 'حذف المؤشر؟' if u.language=='ar' else 'Delete indicator?' }}')"><button class="danger mini">{{ 'حذف' if u.language=='ar' else 'Delete' }}</button></form></div>
+      </div>
+      {% else %}<p class="empty">{{ 'لا توجد مؤشرات مخصصة بعد.' if u.language=='ar' else 'No custom indicators yet.' }}</p>{% endfor %}
+    </article>
+  </div>
+</section>
+{% endblock %}

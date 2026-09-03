@@ -1,0 +1,18 @@
+Luqman Trade v18 final verification
+===================================
+pytest: 91 passed
+python -m compileall app: PASS
+Jinja parse: 15/15 PASS
+node --check app/static/charts.js: PASS
+.env packaged: NO
+SQLite DB packaged: NO
+
+Key regression scenarios:
+- Stock and Options bots active together: PASS
+- $500 -> $50 Stocks + $450 Options, not $950: PASS
+- Shared-capital extra reservation rejected: PASS
+- Stock risk sizing ignores Options bucket: PASS
+- Options risk sizing ignores Stock risk settings: PASS
+- Stock daily risk lock does not stop Options: PASS
+- Options daily risk lock does not stop Stocks: PASS
+- Both pages show both engine statuses: PASS

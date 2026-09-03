@@ -1,0 +1,372 @@
+{% extends 'base.html' %}
+{% block title %}{{ "تداول الأسهم" if u.language=="ar" else "Stock Trading" }} · Luqman Trade{% endblock %}
+{% block page_label %}{{ 'التداول / تداول الأسهم' if u.language=='ar' else 'Trading / Stocks' }}{% endblock %}
+{% block content %}
+{# execution/risk base remains capital_budget.allocation.stocks_cap; visible budget uses stocks_current in v23 #}
+<section class="page dashboard-page">
+<div class="dashhead">
+    <div>
+      <div class="statusline">
+        <span id="stock-bot-status" class="pill {{ 'live' if s.active else 'secondary' }}">{{ ('بوت الأسهم: نشط' if s.active else ('بوت الأسهم: قفل مخاطر' if (s.locked or s.stocks_risk_locked) else 'بوت الأسهم: متوقف')) if u.language=='ar' else ('STOCK BOT: ACTIVE' if s.active else ('STOCK BOT: RISK LOCKED' if (s.locked or s.stocks_risk_locked) else 'STOCK BOT: OFF')) }}</span>
+        <span id="options-bot-status" class="pill {{ 'live' if s.options_bot_active else 'secondary' }}">{{ ('بوت العقود: نشط' if s.options_bot_active else ('بوت العقود: قفل مخاطر' if (s.locked or s.options_risk_locked) else 'بوت العقود: متوقف')) if u.language=='ar' else ('OPTIONS BOT: ACTIVE' if s.options_bot_active else ('OPTIONS BOT: RISK LOCKED' if (s.locked or s.options_risk_locked) else 'OPTIONS BOT: OFF')) }}</span>
+        <span id="market-status" class="pill {{ 'live' if market_open else 'secondary' }}">{{ ('السوق: مفتوح' if market_open else 'السوق: مغلق') if u.language=='ar' else ('MARKET: OPEN' if market_open else 'MARKET: CLOSED') }}</span>
+        <span class="pill secondary">{{ "Alpaca Paper" if broker_mode=="alpaca_market_paper" else broker_mode }}</span>
+      </div>
+      <p class="micro status-note">{{ 'ملاحظة: تشغيل ومخاطر الأسهم مستقلة عن العقود. Alpaca Paper هو وسيط التنفيذ التجريبي.' if u.language=='ar' else 'Note: stock and options engines have independent operation and risk controls. Alpaca Paper is the paper execution broker.' }}</p>
+      <h1>{{ "تداول الأسهم" if u.language=="ar" else "Stock Trading" }}</h1>
+      <p class="muted">{{ "شاشة تداول الأسهم: رأس المال، التنفيذ، الإشارات، الأداء والمخاطر في مكان واحد." if u.language=="ar" else "Stock trading workspace: capital, execution, signals, performance and risk in one place." }}</p>
+    </div>
+    <div class="session-actions">
+      <form method="post" action="/bot/start"><button class="btn" {% if s.active or s.locked or s.stocks_risk_locked %}disabled{% endif %}>{{ "▶ تشغيل البوت" if u.language=="ar" else "▶ START BOT" }}</button></form>
+      <form method="post" action="/bot/stop"><button class="danger" {% if not s.active and not open_stock_trades %}disabled{% endif %}>{{ "■ إيقاف وإغلاق" if u.language=="ar" else "■ STOP & CLOSE" }}</button></form>
+    </div>
+  </div>
+
+  {% if broker.connected %}
+  <section class="account-grid capital-first-grid">
+    <div class="metric hero-metric"><small>{{ "رأس مال البوت الحالي" if u.language=="ar" else "Current Bot Capital" }}</small><b id="current-capital">$ {{ '%.2f'|format(capital_budget.current) }}</b><span class="muted">{{ "القاعدة العليا المشتركة للأسهم والعقود" if u.language=='ar' else "Shared ceiling across stocks and options" }}</span></div>
+    <div class="metric"><small>{{ "الاحتياطي النقدي" if u.language=="ar" else "Cash Reserve" }}</small><b id="capital-reserve">$ {{ '%.2f'|format(capital_budget.reserve) }}</b><span id="capital-reserve-note" class="muted">{{ '%.1f'|format(capital_budget.reserve_pct) }}%</span></div>
+    <div class="metric"><small>{{ "ميزانية الأسهم" if u.language=="ar" else "Stocks Capital Bucket" }}</small><b id="stocks-capital-budget">$ {{ '%.2f'|format(capital_budget.allocation.stocks_current) }}</b><span id="stocks-capital-plan" class="muted">{{ ('مشترك حسب الفرصة' if capital_budget.allocation.mode=='opportunity' else ('%.0f%% من القابل للتداول'|format(capital_budget.allocation.stocks_pct))) if u.language=='ar' else ('Shared opportunity pool' if capital_budget.allocation.mode=='opportunity' else ('%.0f%% of usable capital'|format(capital_budget.allocation.stocks_pct))) }}</span></div>
+    <div class="metric"><small>{{ "المستخدم في الأسهم" if u.language=="ar" else "Capital Used in Stocks" }}</small><b id="capital-invested">$ {{ '%.2f'|format(capital_budget.allocation.stocks_invested) }}</b></div>
+    <div class="metric"><small>{{ "محجوز لأوامر أسهم قيد التنفيذ" if u.language=="ar" else "Reserved for Pending Stock Orders" }}</small><b id="capital-reserved">$ {{ '%.2f'|format(capital_budget.allocation.stocks_reserved) }}</b></div>
+    <div class="metric"><small>{{ "متاح لصفقات أسهم جديدة" if u.language=="ar" else "Available for New Stock Trades" }}</small><b id="capital-available" class="pos">$ {{ '%.2f'|format(capital_budget.allocation.stocks_available) }}</b></div>
+    <div class="metric"><small>{{ "ربح/خسارة الأسهم اليوم" if u.language=="ar" else "Stocks P&L Today" }}</small><b id="stocks-realized-pnl" class="{{ 'pos' if capital_budget.stocks_realized_pnl>=0 else 'neg' }}">$ {{ '%+.2f'|format(capital_budget.stocks_realized_pnl) }}</b><span class="muted">{{ "صفقات الأسهم فقط" if u.language=='ar' else "Stock trades only" }}</span></div>
+  </section>
+  <details class="broker-summary"><summary>{{ "بيانات حساب Alpaca" if u.language=='ar' else "Alpaca Account Details" }}</summary><div class="broker-mini-grid"><span>{{ "قيمة الحساب" if u.language=='ar' else "Equity" }} <b id="broker-equity">$ {{ '%.2f'|format(broker.account.equity) }}</b></span><span>{{ "النقد لدى الوسيط" if u.language=='ar' else "Broker Cash" }} <b id="broker-cash">$ {{ '%.2f'|format(broker.account.cash) }}</b></span><span>{{ "القوة الشرائية" if u.language=='ar' else "Buying Power" }} <b id="broker-buying">$ {{ '%.2f'|format(broker.account.buying_power) }}</b></span><span>{{ "التعرض لدى الوسيط" if u.language=='ar' else "Broker Exposure" }} <b id="broker-exposure">$ {{ '%.2f'|format(broker.account.long_market_value) }}</b></span><span id="broker-day-pnl" class="{{ 'pos' if broker.account.day_pnl>=0 else 'neg' }}">{{ "اليوم" if u.language=='ar' else "Today" }} {{ '%+.2f'|format(broker.account.day_pnl) }}</span><span id="broker-positions">{{ broker.positions|length }} {{ "مركز مفتوح" if u.language=='ar' else "open position(s)" }}</span></div></details>
+  {% else %}
+  <div class="notice danger-note">{{ ('الوسيط غير متاح: ' ~ broker.error ~ '. أدوات التداول تبقى في وضع آمن.') if u.language=='ar' else ('Broker unavailable: ' ~ broker.error ~ '. Trading controls remain fail-safe.') }}</div>
+  {% endif %}
+
+  <div class="portfolio-layout">
+    <article class="terminal-chart-panel" id="dashboard-portfolio-chart" data-baseline="{{s.capital}}">
+      <div class="chart-toolbar"><div><h2>{{ "قيمة المحفظة" if u.language=="ar" else "Portfolio Equity" }}</h2><div class="chart-statusline"><strong data-chart-status>{{ 'جارٍ التحميل…' if u.language=='ar' else 'Loading…' }}</strong><span data-trend-label class="trend-badge flat">{{ 'ثابت →' if u.language=='ar' else 'Flat →' }}</span></div></div><div class="range-tabs"><button data-range="1D" class="active">1D</button><button data-range="5D">5D</button><button data-range="1M">1M</button><button data-range="3M">3M</button><button data-range="1Y">1Y</button><button data-range="ALL">{{'الكل' if u.language=='ar' else 'All'}}</button></div></div>
+      <div class="terminal-chart"><svg aria-label="Portfolio equity movement"></svg><div class="chart-empty-copy">{{ 'لا توجد بيانات كافية للرسم بعد.' if u.language=='ar' else 'Not enough chart data yet.' }}</div></div>
+      <div class="chart-foot"><span>{{ 'الأعلى' if u.language=='ar' else 'High' }}: <b data-chart-high>—</b></span><span>{{ 'الأدنى' if u.language=='ar' else 'Low' }}: <b data-chart-low>—</b></span><span>{{ 'التغير' if u.language=='ar' else 'Change' }}: <b data-chart-change>—</b></span></div>
+      <div class="session-actions"><a class="ghost mini" href="/portfolio">{{ "فتح رسم المحفظة" if u.language=="ar" else "Open Portfolio Chart" }}</a><a class="ghost mini" href="/reports">{{ "التقارير الكاملة" if u.language=="ar" else "Full reports" }}</a></div>
+    </article>
+
+    <article>
+      <h2>{{ "محرك الأداء" if u.language=="ar" else "Performance Engine" }}</h2>
+      <div class="mini-stats">
+        <div><small>{{ "ربح/خسارة الأسهم" if u.language=="ar" else "Stocks P&L" }}</small><b id="website-pnl" class="{{ 'pos' if capital_budget.stocks_realized_pnl>=0 else 'neg' }}">$ {{ '%+.2f'|format(capital_budget.stocks_realized_pnl) }}</b></div>
+        <div><small>{{ "نسبة الفوز" if u.language=="ar" else "Win Rate" }}</small><b>{{ '%.1f'|format(stock_metrics.win_rate) }}%</b></div>
+        <div><small>{{ "عامل الربح" if u.language=="ar" else "Profit Factor" }}</small><b>{{ '∞' if stock_metrics.profit_factor>=999 else '%.2f'|format(stock_metrics.profit_factor) }}</b></div>
+        <div><small>{{ "الصفقات" if u.language=="ar" else "Trades" }}</small><b id="trades-count">{{ s.trades_today }}/{{ s.max_trades }}</b></div>
+        <div><small>{{ "المفتوحة" if u.language=="ar" else "Open" }}</small><b id="open-count">{{ open_stock_trades|length }}</b></div>
+      </div>
+    </article>
+  </div>
+
+  <article class="positions-card">
+    <div class="cardhead"><div><h2>{{ "الصفقات الجارية" if u.language=="ar" else "Live Positions" }}</h2><p class="muted">{{ "مباشرة من حساب Alpaca Paper" if u.language=="ar" else "Directly from Alpaca Paper" }}</p></div><span class="badge">{{ "مباشر" if u.language=="ar" else "LIVE" }}</span></div>
+    <div class="table"><table>
+      <tr><th>{{ "السهم" if u.language=="ar" else "Symbol" }}</th><th>{{ "الكمية" if u.language=="ar" else "Qty" }}</th><th>{{ "الدخول" if u.language=="ar" else "Entry" }}</th><th>{{ "الحالي" if u.language=="ar" else "Current" }}</th><th>{{ "القيمة السوقية" if u.language=="ar" else "Market Value" }}</th><th>{{ "الربح/الخسارة غير المحققة" if u.language=="ar" else "Unrealized P&L" }}</th><th>{{ "اليوم" if u.language=="ar" else "Today" }}</th><th>{{ "إجراء" if u.language=="ar" else "Action" }}</th></tr>
+      <tbody id="live-positions-body">{% for p in stock_broker_positions %}
+      <tr><td><a class="ticker-link" href="/stock/{{p.symbol}}"><b>{{p.symbol}}</b></a></td><td>{{'%.2f'|format(p.qty)}}</td><td>${{'%.2f'|format(p.avg_entry_price)}}</td><td>${{'%.2f'|format(p.current_price)}}</td><td>${{'%.2f'|format(p.market_value)}}</td><td class="{{'pos' if p.unrealized_pl>=0 else 'neg'}}">${{'%+.2f'|format(p.unrealized_pl)}} ({{'%+.2f'|format(p.unrealized_plpc)}}%)</td><td class="{{'pos' if p.change_today>=0 else 'neg'}}">{{'%+.2f'|format(p.change_today)}}%</td><td><form method="post" action="/positions/{{p.symbol}}/partial-close" class="partial-close-form manual-qty-form" onsubmit="return confirm('{{ 'تأكيد بيع الكمية المكتوبة من ' if u.language=='ar' else 'Confirm selling the entered quantity of ' }}{{p.symbol}}?')"><input name="qty" type="number" min="0.000001" max="{{p.qty}}" step="0.000001" required placeholder="{{ 'كمية البيع' if u.language=='ar' else 'Sell qty' }}"><button type="button" class="secondary mini max-qty-btn" data-max-qty="{{p.qty}}" aria-label="{{ 'تحديد كامل الكمية المتاحة' if u.language=='ar' else 'Use full available quantity' }}">{{ 'الحد الأعلى' if u.language=='ar' else 'MAX' }}</button><button class="danger mini">{{ 'بيع' if u.language=='ar' else 'Sell' }}</button></form></td></tr>
+      {% else %}<tr><td colspan="8" class="empty">{{ "لا توجد صفقات مفتوحة." if u.language=="ar" else "No open positions." }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </article>
+
+  <article>
+    <div class="cardhead"><div><h2>{{ "مؤشرات الأسهم" if u.language=="ar" else "Stock Intelligence" }}</h2><p class="muted">{{ "آخر فحص 5 دقائق لكل سهم مسموح. الدرجة هي تقييم قواعد وليست احتمال نجاح مضمون." if u.language=="ar" else "Latest 5-minute scan stored for every allowed symbol. Score is a rule score, not a guaranteed probability." }}</p></div><form method="post" action="/bot/simulate"><button class="ghost mini" {% if not s.active %}disabled{% endif %}>{{ "فحص الآن" if u.language=="ar" else "Run scan now" }}</button></form></div>
+    <div class="indicator-grid">
+      {% for x in indicator_rows %}
+      <a href="/stock/{{x.symbol}}" data-indicator-card data-symbol="{{x.symbol}}" class="indicator-card {{ 'qualified' if x.qualified else '' }}">
+        <div class="indicator-top"><div><b class="ticker">{{x.symbol}}</b>{% if x.available %}<span data-price>${{'%.2f'|format(x.price)}}</span>{% endif %}</div><span data-verdict class="verdict {{x.verdict|lower}}">{{code_label(x.verdict,u.language)}}</span></div>
+        {% if x.available %}
+        <div class="scorebar"><i data-scorebar style="width:{{ [x.score,100]|min }}%"></i></div><div class="scoreline"><strong data-score>{{'%.0f'|format(x.score)}}/100</strong><small>{{ "درجة الإشارة" if u.language=="ar" else "Signal Score" }}</small></div>
+        <div class="indicator-values">
+          <span>RSI <b data-rsi>{{'%.1f'|format(x.rsi14)}}</b></span><span>ADX <b data-adx>{{'%.1f'|format(x.adx14)}}</b></span>
+          <span>RVOL <b data-rvol>{{'%.2f'|format(x.rel_volume)}}x</b></span><span>Mom <b data-mom>{{'%+.2f'|format(x.momentum_5)}}%</b></span>
+          <span>VWAP <b data-vwap>${{'%.2f'|format(x.vwap)}}</b></span><span>ATR <b data-atr>{{'%.2f'|format(x.atr14)}}</b></span>
+        </div>
+        <div class="ema-row"><small>EMA 9/20/50</small><b data-ema>{{'%.2f'|format(x.ema9)}} / {{'%.2f'|format(x.ema20)}} / {{'%.2f'|format(x.ema50)}}</b></div>
+        <p class="micro" data-reasons>{% if x.reasons %}✓ {{x.reasons[:2]|join(' · ')}}{% elif x.blockers %}{{x.blockers[:2]|join(' · ')}}{% endif %}</p>
+        <div class="signal-life" data-life>
+          <b>{{ 'حالة الإشارة' if u.language=='ar' else 'Signal Lifecycle' }}:</b>
+          <span data-life-state>{{ x.lifecycle.state if x.lifecycle else 'LOST' }}</span> ·
+          <span data-life-trend>{{ ('↑ تتحسن' if x.lifecycle.trend=='up' else ('↓ تضعف' if x.lifecycle.trend=='down' else '→ مستقرة')) if u.language=='ar' else ('↑ Improving' if x.lifecycle.trend=='up' else ('↓ Weakening' if x.lifecycle.trend=='down' else '→ Stable')) }}</span>
+          <small>{{ x.lifecycle.qualified_scans if x.lifecycle else 0 }} {{ 'فحوصات مؤهلة متتالية' if u.language=='ar' else 'consecutive qualified scans' }}</small>
+        </div>
+        <p class="execution-state" data-execution>{{ 'جاري فحص جاهزية التنفيذ…' if u.language=='ar' else 'Checking execution readiness…' }}</p>
+        {% else %}<div class="empty compact">Waiting for first scan.</div>{% endif %}
+      </a>
+      {% endfor %}
+    </div>
+  </article>
+
+  <div class="twocol">
+    <article class="risk-settings-card">
+      <div class="cardhead">
+        <div>
+          <h2>{{ 'إعدادات تداول ومخاطر الأسهم' if u.language=='ar' else 'Stock Trading & Risk Settings' }}</h2>
+          <p class="muted">{{ 'اختر ملف مخاطر جاهز ليضبط النظام القيم تلقائياً، أو اختر مخصص للتحكم بكل قيمة بنفسك. رأس المال تحدده أنت في الحالتين.' if u.language=='ar' else 'Choose a ready risk profile to configure the limits automatically, or choose Custom to control every value yourself. You set the capital in both modes.' }}</p>
+        </div>
+      </div>
+
+      <form method="post" action="/settings" class="risk-form-v2" id="risk-settings-form" data-current-profile="{{s.risk_profile}}">
+        <section class="risk-primary-panel">
+          <div class="risk-primary-copy">
+            <span class="eyebrow">{{ 'ابدأ من هنا' if u.language=='ar' else 'START HERE' }}</span>
+            <h3>{{ 'اختر طريقة إدارة المخاطر' if u.language=='ar' else 'Choose your risk method' }}</h3>
+            <p>{{ 'الملفات الجاهزة تغيّر جميع حدود المخاطر الأساسية بما يتناسب مع المستوى. خيار مخصص يفتح لك القيم للتعديل اليدوي.' if u.language=='ar' else 'Ready profiles adjust all core risk limits for the selected level. Custom unlocks the values for manual control.' }}</p>
+          </div>
+          <div class="risk-primary-grid single-control">
+            <label class="primary-field">
+              <span class="field-title">{{ 'ملف المخاطر' if u.language=='ar' else 'Risk Profile' }}</span>
+              <select name="risk_profile" id="risk-profile-select">
+                <option value="very_low" {% if s.risk_profile=='very_low' %}selected{% endif %}>{{ 'منخفضة جداً' if u.language=='ar' else 'Very Low' }}</option>
+                <option value="low" {% if s.risk_profile=='low' %}selected{% endif %}>{{ 'منخفضة' if u.language=='ar' else 'Low' }}</option>
+                <option value="medium" {% if s.risk_profile=='medium' %}selected{% endif %}>{{ 'متوسطة' if u.language=='ar' else 'Medium' }}</option>
+                <option value="high" {% if s.risk_profile=='high' %}selected{% endif %}>{{ 'مرتفعة' if u.language=='ar' else 'High' }}</option>
+                <option value="very_high" {% if s.risk_profile=='very_high' %}selected{% endif %}>{{ 'عالية جداً' if u.language=='ar' else 'Very High' }}</option>
+                <option value="custom" {% if s.risk_profile=='custom' %}selected{% endif %}>{{ 'مخصص — أتحكم بنفسي' if u.language=='ar' else 'Custom — I control the values' }}</option>
+              </select>
+              <span class="field-range">{{ 'جاهز: يضبط المخاطرة، الخسارة اليومية، الهدف، حجم الصفقة، عدد المراكز، الاحتياطي، الوقف والهدف والانتظار.' if u.language=='ar' else 'Ready: configures trade risk, daily loss, target, position size, open positions, reserve, stop/target and cooldown.' }}</span>
+            </label>
+          </div>
+          <div class="risk-profile-preview" id="risk-profile-preview" aria-live="polite"></div>
+        </section>
+
+        <div class="risk-summary">
+          <span>{{ 'خسارة الأسهم اليومية' if u.language=='ar' else 'Stock Daily Loss' }} <b data-risk-summary="daily_loss_pct">{{s.daily_loss_pct}}%</b></span>
+          <span>{{ 'مخاطرة الأسهم/صفقة' if u.language=='ar' else 'Stock Risk / Trade' }} <b data-risk-summary="risk_per_trade_pct">{{s.risk_per_trade_pct}}%</b></span>
+          <span>{{ 'هدف الربح' if u.language=='ar' else 'Profit Target' }} <b data-risk-summary="profit_target_pct">{{s.profit_target_pct}}%</b></span>
+          <span>{{ 'أقصى حجم/صفقة' if u.language=='ar' else 'Max Position' }} <b data-risk-summary="max_position_allocation_pct">{{s.max_position_allocation_pct}}%</b></span>
+          <span>{{ 'مراكز الأسهم المفتوحة' if u.language=='ar' else 'Open Stock Positions' }} <b data-risk-summary="max_open_positions_user">{{s.max_open_positions_user}}</b></span>
+          <span>{{ 'احتياطي نقدي' if u.language=='ar' else 'Cash Reserve' }} <b data-risk-summary="cash_reserve_pct">{{s.cash_reserve_pct}}%</b></span>
+        </div>
+
+        {% if s.risk_per_trade_pct > 5 %}<div class="notice danger-note"><b>{{ 'إعداد عالي المخاطر:' if u.language=='ar' else 'High-risk setting:' }}</b> {{ 'المخاطرة لكل صفقة فوق 5% قد تنتج مراكز كبيرة جداً، ولا تمثل اختباراً محافظاً للتداول الحقيقي.' if u.language=='ar' else 'Risk per Trade above 5% can create unusually large positions and is not representative of conservative live testing.' }}</div>{% endif %}
+
+        <details class="risk-details" id="risk-details">
+          <summary><span>{{ 'تفاصيل الإعدادات' if u.language=='ar' else 'Detailed Settings' }}</span><small>{{ 'افتح لعرض الوقف والهدف والجدولة وبقية القيم' if u.language=='ar' else 'Open to view stops, targets, scheduling and the remaining controls' }}</small></summary>
+        <div class="risk-example">
+          <b>{{ 'مثال سريع' if u.language=='ar' else 'Quick example' }}</b>
+          <p>{{ 'إذا كان رأس المال المخصص $ 10,000 والمخاطرة لكل صفقة 1%، فالحد النظري للخسارة في الصفقة ≈ $ 100. الحد النهائي لحجم الصفقة يراعي الوقف، نسبة الحد الأقصى للحجم، الاحتياطي النقدي ورأس المال المتاح.' if u.language=='ar' else 'If Allocated Capital is $ 10,000 and Risk per Trade is 1%, the theoretical loss limit per trade is about $ 100. Final position size also respects the stop, max allocation, cash reserve and available capital.' }}</p>
+        </div>
+
+        <div class="custom-settings-head">
+          <div>
+            <span class="eyebrow">{{ 'الإعدادات التفصيلية' if u.language=='ar' else 'DETAILED SETTINGS' }}</span>
+            <h3>{{ 'قيم الملف الجاهز أو التخصيص اليدوي' if u.language=='ar' else 'Profile values or manual customization' }}</h3>
+          </div>
+          <span class="profile-lock-state" id="profile-lock-state"></span>
+        </div>
+
+        <div class="formgrid risk-custom-grid" id="risk-custom-grid">
+          <label>
+            <span class="field-title">{{ 'الحد الأقصى للخسارة اليومية %' if u.language=='ar' else 'Maximum Daily Loss %' }}</span>
+            <small>{{ 'إذا بلغت خسارة الجلسة هذه النسبة يتوقف البوت عن فتح صفقات جديدة.' if u.language=='ar' else 'The bot stops opening new trades when the session reaches this loss percentage.' }}</small>
+            <input data-risk-managed class="numeric-input" type="number" step="0.1" min="0" max="100" name="daily_loss_pct" value="{{s.daily_loss_pct}}">
+            <span class="field-range">{{ 'الحد الصلب للنظام: ' if u.language=='ar' else 'Platform hard cap: ' }}{{hard_cap}}%</span>
+          </label>
+          <label>
+            <span class="field-title">{{ 'مخاطرة الأسهم لكل صفقة %' if u.language=='ar' else 'Stock Risk per Trade %' }}</span>
+            <small>{{ 'الخسارة النظرية القصوى للصفقة عند الوصول إلى وقف الخسارة.' if u.language=='ar' else 'Theoretical maximum loss for one trade if its stop is reached.' }}</small>
+            <input data-risk-managed class="numeric-input" type="number" step="0.1" min="0" max="100" name="risk_per_trade_pct" value="{{s.risk_per_trade_pct}}">
+          </label>
+          <label>
+            <span class="field-title">{{ 'الحد الأقصى لحجم الصفقة %' if u.language=='ar' else 'Max Position Allocation %' }}</span>
+            <small>{{ 'أقصى نسبة من رأس المال المخصص لصفقة واحدة.' if u.language=='ar' else 'Maximum share of allocated capital for one position.' }}</small>
+            <input data-risk-managed class="numeric-input" type="number" step="1" min="1" max="100" name="max_position_allocation_pct" value="{{s.max_position_allocation_pct}}">
+          </label>
+          <label>
+            <span class="field-title">{{ 'الحد الأقصى للصفقات المفتوحة' if u.language=='ar' else 'Maximum Open Positions' }}</span>
+            <small>{{ 'أقصى عدد مراكز مفتوحة في نفس الوقت.' if u.language=='ar' else 'Maximum positions open at the same time.' }}</small>
+            <input data-risk-managed class="numeric-input" type="number" min="1" max="20" name="max_open_positions_user" value="{{s.max_open_positions_user}}">
+          </label>
+          <label>
+            <span class="field-title">{{ 'الاحتياطي النقدي %' if u.language=='ar' else 'Cash Reserve %' }}</span>
+            <small>{{ 'جزء يبقى غير مستخدم لفرص لاحقة.' if u.language=='ar' else 'Capital kept unused for later opportunities.' }}</small>
+            <input data-risk-managed class="numeric-input" type="number" step="1" min="0" max="95" name="cash_reserve_pct" value="{{s.cash_reserve_pct}}">
+          </label>
+          <label>
+            <span class="field-title">{{ 'الحد الأقصى للصفقات اليومية' if u.language=='ar' else 'Maximum Daily Trades' }}</span>
+            <small>{{ 'أقصى عدد صفقات جديدة خلال الجلسة.' if u.language=='ar' else 'Maximum number of new trades during the session.' }}</small>
+            <input data-risk-managed class="numeric-input" type="number" min="1" max="1000" name="max_trades" value="{{s.max_trades}}">
+          </label>
+          <label>
+            <span class="field-title">{{ 'هدف الربح اليومي %' if u.language=='ar' else 'Daily Profit Target %' }}</span>
+            <small>{{ 'عند بلوغه يتوقف فتح صفقات جديدة لبقية الجلسة.' if u.language=='ar' else 'Stops new entries for the session when reached.' }}</small>
+            <input data-risk-managed class="numeric-input" type="number" step="0.1" min="0" max="100" name="profit_target_pct" value="{{s.profit_target_pct}}">
+          </label>
+          <label>
+            <span class="field-title">{{ 'طريقة الوقف والهدف' if u.language=='ar' else 'Stop / Target Mode' }}</span>
+            <select data-risk-managed name="stop_target_mode"><option value="atr" {% if s.stop_target_mode=='atr' %}selected{% endif %}>ATR</option><option value="fixed_pct" {% if s.stop_target_mode=='fixed_pct' %}selected{% endif %}>{{ 'نسبة ثابتة' if u.language=='ar' else 'Fixed %' }}</option><option value="risk_reward" {% if s.stop_target_mode=='risk_reward' %}selected{% endif %}>{{ 'مخاطرة/عائد' if u.language=='ar' else 'Risk/Reward' }}</option></select>
+          </label>
+          <label><span class="field-title">{{ 'حماية خروج الأسهم' if u.language=='ar' else 'Stock Exit Protection' }}</span><select name="stocks_exit_mode"><option value="trailing" {% if s.stocks_exit_mode=='trailing' %}selected{% endif %}>{{ 'Trailing Stop عند Alpaca — موصى به' if u.language=='ar' else 'Alpaca Broker Trailing Stop — Recommended' }}</option><option value="bracket" {% if s.stocks_exit_mode=='bracket' %}selected{% endif %}>{{ 'وقف + هدف ثابت Bracket' if u.language=='ar' else 'Fixed Stop + Take Profit Bracket' }}</option></select><small>{{ 'للأسهم الكاملة: أمر Trailing مستقل عند الوسيط ويتحرك تلقائياً حتى لو توقف Render. الأسهم الجزئية لا يدعم Alpaca لها Trailing أصلي، فتستخدم الحماية الجزئية الآمنة الحالية.' if u.language=='ar' else 'Whole shares: native broker trailing order keeps moving at Alpaca even if Render stops. Alpaca does not document native trailing for fractional shares, so fractional positions keep their safe fractional protection fallback.' }}</small></label>
+          <label><span class="field-title">{{ 'مسافة Trailing للأسهم %' if u.language=='ar' else 'Stock Trailing Distance %' }}</span><input class="numeric-input" type="number" step="0.1" min="0.1" max="20" name="stocks_trailing_distance_pct" value="{{s.stocks_trailing_distance_pct}}"><small>{{ 'مثال 1%: إذا صنع السهم قمة $ 110 يصبح مستوى التفعيل النظري قرب $ 108.90. الوقف يرتفع مع القمم ولا ينخفض.' if u.language=='ar' else 'Example 1%: after a $ 110 high, the theoretical trigger is near $ 108.90. The stop rises with new highs and never moves down.' }}</small></label>
+          <label><span class="field-title">{{ 'قيمة وقف الخسارة % — وضع Bracket فقط' if u.language=='ar' else 'Stop Loss Value % — Bracket mode only' }}</span><input data-risk-managed class="numeric-input" type="number" step="0.1" min="0.1" max="20" name="stop_loss_value" value="{{s.stop_loss_value}}"></label>
+          <label><span class="field-title">{{ 'قيمة هدف الربح % — وضع Bracket فقط' if u.language=='ar' else 'Take Profit Value % — Bracket mode only' }}</span><input data-risk-managed class="numeric-input" type="number" step="0.1" min="0.1" max="50" name="take_profit_value" value="{{s.take_profit_value}}"></label>
+          <label><span class="field-title">{{ 'نسبة العائد إلى المخاطرة' if u.language=='ar' else 'Risk / Reward Ratio' }}</span><input data-risk-managed class="numeric-input" type="number" step="0.1" min="0.5" max="10" name="risk_reward_ratio" value="{{s.risk_reward_ratio}}"></label>
+          <label><span class="field-title">{{ 'الانتظار بين الصفقات (ثوانٍ)' if u.language=='ar' else 'Trade Cooldown (seconds)' }}</span><input data-risk-managed class="numeric-input" type="number" min="0" max="86400" name="trade_cooldown_seconds" value="{{s.trade_cooldown_seconds}}"><span class="field-range">{{ '0 = بدون انتظار · 300 = 5 دقائق · 600 = 10 دقائق' if u.language=='ar' else '0 = none · 300 = 5 min · 600 = 10 min' }}</span></label>
+        </div>
+
+        <div class="risk-secondary-grid">
+          <label>
+            <span class="field-title">{{ 'السماح بأجزاء الأسهم' if u.language=='ar' else 'Allow Fractional Shares' }}</span>
+            <small>{{ 'يسمح بكميات مثل 0.25 سهم عندما يدعم الأصل ذلك في Alpaca.' if u.language=='ar' else 'Allows quantities such as 0.25 share when Alpaca marks the asset fractionable.' }}</small>
+            <select name="allow_fractional"><option value="off" {% if not s.allow_fractional %}selected{% endif %}>{{ 'لا' if u.language=='ar' else 'Off' }}</option><option value="on" {% if s.allow_fractional %}selected{% endif %}>{{ 'نعم' if u.language=='ar' else 'On' }}</option></select>
+          </label>
+          <label><span class="field-title">{{ 'وضع تشغيل البوت' if u.language=='ar' else 'Bot Start Mode' }}</span><select name="start_mode"><option value="manual" {% if s.start_mode=='manual' %}selected{% endif %}>{{ 'يدوي' if u.language=='ar' else 'Manual' }}</option><option value="scheduled" {% if s.start_mode=='scheduled' %}selected{% endif %}>{{ 'مجدول' if u.language=='ar' else 'Scheduled' }}</option><option value="both" {% if s.start_mode=='both' %}selected{% endif %}>{{ 'يدوي + مجدول' if u.language=='ar' else 'Manual + Scheduled' }}</option></select></label>
+          <fieldset class="schedule-days"><legend>{{ 'أيام التشغيل التلقائي' if u.language=='ar' else 'Scheduled Trading Days' }}</legend>{% set sd=s.scheduled_days.split(',') %}{% for i,nar,nen in [(0,'الاثنين','Monday'),(1,'الثلاثاء','Tuesday'),(2,'الأربعاء','Wednesday'),(3,'الخميس','Thursday'),(4,'الجمعة','Friday')] %}<label class="stockchip"><input type="checkbox" name="scheduled_days" value="{{i}}" {% if i|string in sd %}checked{% endif %}>{{ nar if u.language=='ar' else nen }}</label>{% endfor %}</fieldset>
+          <label><span class="field-title">{{ 'التشغيل بعد الافتتاح (دقائق)' if u.language=='ar' else 'Start Delay After Open (minutes)' }}</span><input class="numeric-input" type="number" min="0" max="120" name="start_delay_minutes" value="{{s.start_delay_minutes}}"></label>
+          <label><span class="field-title">{{ 'الإيقاف قبل الإغلاق (دقائق)' if u.language=='ar' else 'Auto Stop Before Close (minutes)' }}</span><input class="numeric-input" type="number" min="5" max="120" name="auto_stop_before_close_minutes" value="{{s.auto_stop_before_close_minutes}}"></label>
+          <label>
+            <span class="field-title">{{ 'اللغة' if u.language=='ar' else 'Language' }}</span>
+            <small>{{ 'تغيير اتجاه ونصوص الواجهة بين العربية والإنجليزية.' if u.language=='ar' else 'Switch interface text and direction between Arabic and English.' }}</small>
+            <select name="language"><option value="ar" {% if u.language=='ar' %}selected{% endif %}>العربية</option><option value="en" {% if u.language=='en' %}selected{% endif %}>English</option></select>
+          </label>
+        </div>
+
+        </details>
+
+        <button class="btn settings-save" {% if s.active %}disabled{% endif %}>{{ 'حفظ إعدادات التداول والمخاطر' if u.language=='ar' else 'Save Trading & Risk Settings' }}</button>
+      </form>
+      <p class="micro settings-note">{{ 'ملاحظة: أوقف البوت قبل تعديل هذه القيم. ملفات المخاطر تضبط القيم تلقائياً لكنها لا تضمن الربح.' if u.language=='ar' else 'Note: Stop the bot before changing these values. Risk profiles configure limits automatically but do not guarantee profit.' }}</p>
+    </article>
+
+    <article>
+      <div class="cardhead"><h2>{{ "الأسهم المسموحة" if u.language=="ar" else "Allowed Stocks" }}</h2><a class="ghost mini" href="/indicators">{{ "إضافة المؤشرات" if u.language=="ar" else "Indicator Studio" }}</a></div>
+      <p class="muted">{{ "لن يفحص البوت أو يتداول إلا الأسهم المحددة." if u.language=="ar" else "Only checked symbols can be scanned and traded." }}</p>
+      <form method="post" action="/stocks">
+        <div class="stockgrid">{% for x in watch %}<label class="stockchip"><input type="checkbox" name="symbols" value="{{x}}" {% if x in selected %}checked{% endif %} {% if s.active %}disabled{% endif %}><b>{{x}}</b></label>{% endfor %}</div>
+        <button class="btn" {% if s.active %}disabled{% endif %}>{{ "حفظ الأسهم المسموحة" if u.language=="ar" else "Save Allowed Stocks" }}</button>
+      </form>
+    </article>
+  </div>
+
+  <article>
+    <div class="cardhead"><div><h2>{{ "سجل التداول" if u.language=="ar" else "Trade Ledger" }}</h2><p class="muted">{{ "سجل الدخول والخروج والنتيجة المتزامنة مع الوسيط." if u.language=="ar" else "Website record of entry, exit and broker-synchronized result." }}</p></div><a class="ghost mini" href="/reports">{{ "التقارير اليومية والشهرية" if u.language=="ar" else "Daily & Monthly Reports" }}</a></div>
+    <div class="table"><table>
+      <thead><tr><th>{{ "الوقت" if u.language=="ar" else "Time" }}</th><th>{{ "الرمز" if u.language=="ar" else "Symbol" }}</th><th>{{ "الحالة" if u.language=="ar" else "Status" }}</th><th>{{ "الكمية" if u.language=="ar" else "Qty" }}</th><th>{{ "الدخول" if u.language=="ar" else "Entry" }}</th><th>{{ "الوقف" if u.language=="ar" else "Stop" }}</th><th>{{ "الهدف" if u.language=="ar" else "Target" }}</th><th>{{ "الدرجة" if u.language=="ar" else "Score" }}</th><th>{{ "الخروج" if u.language=="ar" else "Exit" }}</th><th>{{ "الربح/الخسارة" if u.language=="ar" else "P&L" }}</th><th>{{ "السبب" if u.language=="ar" else "Reason" }}</th></tr></thead>
+      <tbody id="trade-ledger-body">{% for t in trades %}<tr>
+        <td><small>{{t.opened_at.strftime('%m-%d %H:%M') if t.opened_at else '—'}}</small></td><td><b>{{t.symbol}}</b></td><td><span class="verdict {{'qualified' if t.status=='OPEN' else 'wait'}}">{{code_label(t.status,u.language)}}</span></td><td>{{'%.2f'|format(t.qty)}}</td><td>${{'%.2f'|format(t.entry)}}</td><td>${{'%.2f'|format(t.stop_loss or 0)}}</td><td>${{'%.2f'|format(t.take_profit or 0)}}</td><td>{{'%.0f'|format(t.signal_score or 0)}}</td><td>{{'—' if not t.exit else '$%.2f'|format(t.exit)}}</td>
+        <td class="{{ 'pos' if t.pnl>=0 else 'neg' }}">{% if t.status=='OPEN' and t.symbol in position_map %}${{'%+.2f'|format(position_map[t.symbol].unrealized_pl)}} {{ "مباشر" if u.language=="ar" else "live" }}{% else %}${{'%+.2f'|format(t.pnl)}}{% endif %}</td><td><small>{{code_label(t.reason,u.language)}}</small></td>
+      </tr>{% else %}<tr><td colspan="11" class="empty">{{ "لا توجد صفقات بعد." if u.language=="ar" else "No trades yet." }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </article>
+
+  <div class="twocol">
+    <article><h2>{{ "أحدث أوامر الوسيط" if u.language=="ar" else "Recent Broker Orders" }}</h2><div class="table"><table><thead><tr><th>{{ "الرمز" if u.language=="ar" else "Symbol" }}</th><th>{{ "الجانب" if u.language=="ar" else "Side" }}</th><th>{{ "النوع" if u.language=="ar" else "Type" }}</th><th>{{ "الكمية" if u.language=="ar" else "Qty" }}</th><th>{{ "سعر التنفيذ" if u.language=="ar" else "Fill" }}</th><th>{{ "الحالة" if u.language=="ar" else "Status" }}</th></tr></thead><tbody id="broker-orders-body">{% for o in broker.orders[:20] %}<tr><td><b>{{o.symbol}}</b></td><td>{{ code_label(o.side|upper,u.language) }}</td><td>{{ code_label(o.type|upper,u.language) }}</td><td>{{o.qty}}</td><td>{{'—' if not o.filled_avg_price else '$ %.2f'|format(o.filled_avg_price)}}</td><td>{{code_label(o.status|upper,u.language)}}</td></tr>{% else %}<tr><td colspan="6" class="empty">{{ "لا توجد أوامر وسيط." if u.language=="ar" else "No broker orders." }}</td></tr>{% endfor %}</tbody></table></div></article>
+    <article><h2>{{ "تنبيهات النظام" if u.language=="ar" else "System Alerts" }}</h2><div id="system-alerts-list">{% for a in alerts %}<div class="alert"><div><b>{{code_label(a.title,u.language)}}</b><small>{{a.created_at.strftime('%H:%M:%S') if a.created_at else ''}}</small></div><p>{{alert_body_label(a.body,u.language)}}</p></div>{% else %}<p class="empty">{{ "لا توجد تنبيهات بعد." if u.language=="ar" else "No alerts yet." }}</p>{% endfor %}</div></article>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="/static/charts.js"></script><script>LTCharts.wirePortfolio(document.getElementById('dashboard-portfolio-chart'));</script>
+<script>
+(()=>{
+  const form=document.getElementById('risk-settings-form'); if(!form)return;
+  const profile=document.getElementById('risk-profile-select');
+  const grid=document.getElementById('risk-custom-grid');
+  const lock=document.getElementById('profile-lock-state');
+  const preview=document.getElementById('risk-profile-preview');
+  const details=document.getElementById('risk-details');
+  const AR=document.documentElement.lang==='ar';
+  const presets={
+    very_low:{risk_per_trade_pct:.25,daily_loss_pct:1,profit_target_pct:1.5,max_position_allocation_pct:15,max_open_positions_user:2,cash_reserve_pct:35,max_trades:3,stop_target_mode:'risk_reward',stop_loss_value:.75,take_profit_value:1.5,risk_reward_ratio:2,trade_cooldown_seconds:900,label:AR?'منخفضة جداً':'Very Low'},
+    low:{risk_per_trade_pct:.5,daily_loss_pct:2,profit_target_pct:2,max_position_allocation_pct:20,max_open_positions_user:3,cash_reserve_pct:30,max_trades:5,stop_target_mode:'risk_reward',stop_loss_value:1,take_profit_value:2,risk_reward_ratio:2,trade_cooldown_seconds:600,label:AR?'منخفضة':'Low'},
+    medium:{risk_per_trade_pct:1,daily_loss_pct:3,profit_target_pct:3,max_position_allocation_pct:30,max_open_positions_user:3,cash_reserve_pct:20,max_trades:8,stop_target_mode:'atr',stop_loss_value:1,take_profit_value:2,risk_reward_ratio:2,trade_cooldown_seconds:300,label:AR?'متوسطة':'Medium'},
+    high:{risk_per_trade_pct:2,daily_loss_pct:5,profit_target_pct:5,max_position_allocation_pct:40,max_open_positions_user:4,cash_reserve_pct:15,max_trades:12,stop_target_mode:'fixed_pct',stop_loss_value:1.5,take_profit_value:3,risk_reward_ratio:2,trade_cooldown_seconds:180,label:AR?'مرتفعة':'High'},
+    very_high:{risk_per_trade_pct:3,daily_loss_pct:7,profit_target_pct:7,max_position_allocation_pct:50,max_open_positions_user:5,cash_reserve_pct:10,max_trades:20,stop_target_mode:'fixed_pct',stop_loss_value:2,take_profit_value:4,risk_reward_ratio:2,trade_cooldown_seconds:60,label:AR?'عالية جداً':'Very High'}
+  };
+  const managed=[...form.querySelectorAll('[data-risk-managed]')];
+  const write=(name,val)=>{const e=form.elements[name];if(!e)return;e.value=String(val);const s=form.querySelector(`[data-risk-summary="${name}"]`);if(s)s.textContent=String(val)+(name.includes('pct')?'%':'')};
+  const apply=(openCustom=false)=>{
+    const key=profile.value,custom=key==='custom',p=presets[key];
+    grid.classList.toggle('profile-locked',!custom);
+    if(details&&custom&&openCustom)details.open=true;
+    managed.forEach(e=>{if(e.tagName==='INPUT')e.readOnly=!custom;e.setAttribute('aria-disabled',custom?'false':'true');e.classList.toggle('managed-locked',!custom)});
+    if(!custom&&p){Object.entries(p).forEach(([k,v])=>{if(k!=='label')write(k,v)});preview.innerHTML=`<b>${AR?'ملف جاهز':'Ready profile'}: ${p.label}</b><span>${AR?'تم ضبط الحدود تلقائياً. غيّر إلى «مخصص» إذا أردت تعديل القيم بنفسك.':'Limits are configured automatically. Switch to Custom to edit them manually.'}</span>`;lock.textContent=AR?'🔒 مضبوط تلقائياً':'🔒 Auto-configured'}
+    else{preview.innerHTML=`<b>${AR?'تخصيص يدوي':'Manual customization'}</b><span>${AR?'كل القيم التفصيلية مفتوحة للتعديل، بينما رأس المال يبقى قرارك دائماً.':'All detailed values are editable, while capital always remains your choice.'}</span>`;lock.textContent=AR?'✎ قابل للتعديل':'✎ Editable'}
+  };
+  profile.addEventListener('change',()=>apply(true));apply(false);
+})();
+</script>
+<script>
+(function(){
+  const LANG={{ ('"ar"' if u.language=='ar' else '"en"')|safe }};
+  const fmtMoney=n=>'$ '+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const signed=n=>(Number(n)>=0?'+':'')+fmtMoney(n);
+  function setText(root,sel,text){const e=root.querySelector(sel);if(e)e.textContent=text;}
+  function renderIndicator(x){
+    const card=document.querySelector(`[data-indicator-card][data-symbol="${CSS.escape(x.symbol)}"]`); if(!card)return;
+    card.classList.toggle('qualified',!!x.qualified);
+    setText(card,'[data-price]',fmtMoney(x.price));
+    const v=card.querySelector('[data-verdict]'); if(v){const raw=x.verdict||'WAIT', ar={WAIT:'انتظار',WATCH:'مراقبة',QUALIFIED:'مؤهلة'};v.textContent=LANG==='ar'?(ar[raw]||raw):raw;v.className='verdict '+String(raw).toLowerCase();}
+    setText(card,'[data-score]',Math.round(Number(x.score||0))+'/100');
+    const bar=card.querySelector('[data-scorebar]');if(bar)bar.style.width=Math.min(100,Number(x.score||0))+'%';
+    setText(card,'[data-rsi]',Number(x.rsi14||0).toFixed(1));setText(card,'[data-adx]',Number(x.adx14||0).toFixed(1));
+    setText(card,'[data-rvol]',Number(x.rel_volume||0).toFixed(2)+'x');setText(card,'[data-mom]',(Number(x.momentum_5||0)>=0?'+':'')+Number(x.momentum_5||0).toFixed(2)+'%');
+    setText(card,'[data-vwap]',fmtMoney(x.vwap));setText(card,'[data-atr]',Number(x.atr14||0).toFixed(2));
+    setText(card,'[data-ema]',`${Number(x.ema9||0).toFixed(2)} / ${Number(x.ema20||0).toFixed(2)} / ${Number(x.ema50||0).toFixed(2)}`);
+    const reasons=(x.reasons&&x.reasons.length?('✓ '+x.reasons.slice(0,2).join(' · ')):(x.blockers||[]).slice(0,2).join(' · '));setText(card,'[data-reasons]',reasons);
+    const ex=card.querySelector('[data-execution]');if(ex&&x.execution){ex.textContent=LANG==='ar'?x.execution.message_ar:x.execution.message_en;ex.className='execution-state '+(x.execution.ok?'ready':'blocked');}
+    if(x.lifecycle){setText(card,'[data-life-state]',x.lifecycle.state);setText(card,'[data-life-trend]',LANG==='ar'?(x.lifecycle.trend==='up'?'↑ تتحسن':x.lifecycle.trend==='down'?'↓ تضعف':'→ مستقرة'):(x.lifecycle.trend==='up'?'↑ Improving':x.lifecycle.trend==='down'?'↓ Weakening':'→ Stable'));}
+  }
+  function renderBroker(d){
+    if(!d.broker||!d.broker.connected)return;
+    const be=document.getElementById('broker-equity'),bc=document.getElementById('broker-cash'),bb=document.getElementById('broker-buying'),bx=document.getElementById('broker-exposure');
+    if(be)be.textContent=fmtMoney(d.broker.equity);if(bc)bc.textContent=fmtMoney(d.broker.cash);if(bb)bb.textContent=fmtMoney(d.broker.buying_power);if(bx)bx.textContent=fmtMoney(d.broker.long_market_value);
+    const p=document.getElementById('broker-day-pnl');if(p){p.textContent=(LANG==='ar'?'اليوم ':'Today ')+signed(d.broker.day_pnl);p.className=d.broker.day_pnl>=0?'pos':'neg';}
+    document.getElementById('broker-positions').textContent=d.broker.positions+' '+(LANG==='ar'?'مركز مفتوح':'open position(s)');
+    const oc=document.getElementById('open-count');if(oc)oc.textContent=d.broker.positions;
+    const body=document.getElementById('live-positions-body');
+    if(body&&Array.isArray(d.broker.position_rows)){
+      if(!d.broker.position_rows.length)body.innerHTML='<tr><td colspan="8" class="empty">{{ "لا توجد صفقات مفتوحة." if u.language=="ar" else "No open positions." }}</td></tr>';
+      else body.innerHTML=d.broker.position_rows.map(x=>`<tr><td><a class="ticker-link" href="/stock/${x.symbol}"><b>${x.symbol}</b></a></td><td>${Number(x.qty).toFixed(6).replace(/0+$/,'').replace(/\.$/,'')}</td><td>${fmtMoney(x.avg_entry_price)}</td><td class="live-flash">${fmtMoney(x.current_price)}</td><td>${fmtMoney(x.market_value)}</td><td class="${x.unrealized_pl>=0?'pos':'neg'}">${signed(x.unrealized_pl)} (${x.unrealized_plpc>=0?'+':''}${x.unrealized_plpc.toFixed(2)}%)</td><td class="${x.change_today>=0?'pos':'neg'}">${x.change_today>=0?'+':''}${x.change_today.toFixed(2)}%</td><td><form method="post" action="/positions/${x.symbol}/partial-close" class="partial-close-form manual-qty-form"><input name="qty" type="number" min="0.000001" max="${x.qty}" step="0.000001" required placeholder="${LANG==='ar'?'كمية البيع':'Sell qty'}"><button type="button" class="secondary mini max-qty-btn" data-max-qty="${x.qty}" aria-label="${LANG==='ar'?'تحديد كامل الكمية المتاحة':'Use full available quantity'}">${LANG==='ar'?'الحد الأعلى':'MAX'}</button><button class="danger mini">${LANG==='ar'?'بيع':'Sell'}</button></form></td></tr>`).join('');
+    }
+  }
+  function fmtQty(n){return Number(n||0).toFixed(6).replace(/0+$/,'').replace(/\.$/,'')||'0';}
+  function fmtClock(iso){if(!iso)return '—';const d=new Date(iso);if(Number.isNaN(d.getTime()))return '—';return d.toLocaleString('en-US',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});}
+  function renderLedger(rows){
+    const body=document.getElementById('trade-ledger-body');if(!body)return;
+    if(!rows?.length){body.innerHTML=`<tr><td colspan="11" class="empty">${LANG==='ar'?'لا توجد صفقات بعد.':'No trades yet.'}</td></tr>`;return;}
+    body.innerHTML=rows.map(t=>`<tr><td><small>${fmtClock(t.opened_at)}</small></td><td><b>${t.symbol}</b></td><td><span class="verdict ${t.status==='OPEN'?'qualified':'wait'}">${t.status_label||t.status}</span></td><td>${fmtQty(t.qty)}</td><td>${fmtMoney(t.entry)}</td><td>${fmtMoney(t.stop_loss)}</td><td>${fmtMoney(t.take_profit)}</td><td>${Math.round(Number(t.score||0))}</td><td>${t.exit==null?'—':fmtMoney(t.exit)}</td><td class="${Number(t.pnl)>=0?'pos':'neg'}">${signed(t.pnl)}${t.is_live?' '+(LANG==='ar'?'مباشر':'live'):''}</td><td><small>${t.reason_label||t.reason||'—'}</small></td></tr>`).join('');
+  }
+  function renderOrders(rows){
+    const body=document.getElementById('broker-orders-body');if(!body)return;
+    if(!rows?.length){body.innerHTML=`<tr><td colspan="6" class="empty">${LANG==='ar'?'لا توجد أوامر وسيط.':'No broker orders.'}</td></tr>`;return;}
+    const side=v=>LANG==='ar'?(String(v).toLowerCase()==='buy'?'شراء':'بيع'):String(v||'').toUpperCase();
+    const type=v=>LANG==='ar'?(String(v).toLowerCase()==='market'?'سوق':String(v).toLowerCase()==='limit'?'محدد':String(v||'')):String(v||'');
+    const status=v=>{const k=String(v||'').toLowerCase(),ar={filled:'منفذ',canceled:'ملغي',cancelled:'ملغي',new:'جديد',accepted:'مقبول',pending_new:'قيد الإرسال',partially_filled:'منفذ جزئياً',rejected:'مرفوض',expired:'منتهي',done_for_day:'منتهي لليوم'};return LANG==='ar'?(ar[k]||String(v||'')):String(v||'').replaceAll('_',' ').toUpperCase();};
+    body.innerHTML=rows.map(o=>`<tr><td><b>${o.symbol||'—'}</b></td><td>${o.side_label||side(o.side)}</td><td>${o.type_label||type(o.type)}</td><td>${o.qty||'—'}</td><td>${o.filled_avg_price?fmtMoney(o.filled_avg_price):'—'}</td><td>${o.status_label||status(o.status)}</td></tr>`).join('');
+  }
+  function renderAlerts(rows){
+    const root=document.getElementById('system-alerts-list');if(!root)return;
+    if(!rows?.length){root.innerHTML=`<p class="empty">${LANG==='ar'?'لا توجد تنبيهات بعد.':'No alerts yet.'}</p>`;return;}
+    root.innerHTML=rows.map(a=>`<div class="alert"><div><b>${a.title||''}</b><small>${a.created_at?new Date(a.created_at).toLocaleTimeString('en-US',{hour12:false}):''}</small></div><p>${a.body||''}</p></div>`).join('');
+  }
+  document.addEventListener('click',function(e){
+    const btn=e.target.closest('.max-qty-btn');
+    if(!btn)return;
+    const form=btn.closest('.manual-qty-form'),input=form?.querySelector('input[name="qty"]');
+    if(!input)return;
+    const raw=btn.dataset.maxQty||input.max||'';
+    const maxQty=Number(raw);
+    if(!Number.isFinite(maxQty)||maxQty<=0)return;
+    input.value=fmtQty(maxQty);
+    input.dispatchEvent(new Event('input',{bubbles:true}));
+    input.focus({preventScroll:true});
+  });
+  async function refreshFast(){
+    try{
+      const r=await fetch('/api/live/dashboard',{cache:'no-store'});if(!r.ok)return;const d=await r.json();
+      const st=document.getElementById('stock-bot-status');if(st){st.textContent=LANG==='ar'?(d.bot.locked?'بوت الأسهم: قفل مخاطر':(d.bot.active?'بوت الأسهم: نشط':'بوت الأسهم: متوقف')):(d.bot.locked?'STOCK BOT: RISK LOCKED':(d.bot.active?'STOCK BOT: ACTIVE':'STOCK BOT: OFF'));st.classList.toggle('live',!!d.bot.active);st.classList.toggle('secondary',!d.bot.active);}const os=document.getElementById('options-bot-status');if(os){const ol=!!(d.bot.system_locked||d.bot.options_risk_locked);os.textContent=LANG==='ar'?(ol?'بوت العقود: قفل مخاطر':(d.bot.options_active?'بوت العقود: نشط':'بوت العقود: متوقف')):(ol?'OPTIONS BOT: RISK LOCKED':(d.bot.options_active?'OPTIONS BOT: ACTIVE':'OPTIONS BOT: OFF'));os.classList.toggle('live',!!d.bot.options_active);os.classList.toggle('secondary',!d.bot.options_active);}
+      const ms=document.getElementById('market-status');if(ms){ms.textContent=LANG==='ar'?(d.market_open?'السوق مفتوح':'السوق مغلق'):(d.market_open?'MARKET OPEN':'MARKET CLOSED');ms.classList.toggle('live',!!d.market_open);ms.classList.toggle('secondary',!d.market_open);}
+      const wp=document.getElementById('website-pnl');if(wp){const v=Number(d.budget?.stocks_realized_pnl||0);wp.textContent=signed(v);wp.className=v>=0?'pos':'neg';}
+      const tc=document.getElementById('trades-count');if(tc)tc.textContent=`${d.bot.trades}/${d.bot.max_trades}`;
+      if(d.budget){const cc=document.getElementById('current-capital'),rv=document.getElementById('capital-reserve'),sc=document.getElementById('stocks-capital-budget'),su=document.getElementById('capital-invested'),sr=document.getElementById('capital-reserved'),sa=document.getElementById('capital-available'),spl=document.getElementById('stocks-capital-plan'),spnl=document.getElementById('stocks-realized-pnl'),rn=document.getElementById('capital-reserve-note'),a=d.budget.allocation||{};if(cc)cc.textContent=fmtMoney(d.budget.current);if(rv)rv.textContent=fmtMoney(d.budget.reserve);if(sc)sc.textContent=fmtMoney(a.stocks_current||0);if(su)su.textContent=fmtMoney(a.stocks_invested||0);if(sr)sr.textContent=fmtMoney(a.stocks_reserved||0);if(sa)sa.textContent=fmtMoney(a.stocks_available||0);if(spl)spl.textContent=a.mode==='opportunity'?(document.documentElement.lang==='ar'?'مشترك حسب الفرصة':'Shared opportunity pool'):`${Math.round(Number(a.stocks_pct||0))}% ${document.documentElement.lang==='ar'?'من القابل للتداول':'of usable capital'}`;if(spnl){const v=Number(d.budget.stocks_realized_pnl||0);spnl.textContent=signed(v);spnl.className=v>=0?'pos':'neg';}if(rn)rn.textContent=Number(d.budget.reserve_pct||0).toFixed(1)+'%';}
+      renderBroker(d);renderLedger(d.trades||[]);renderOrders(d.broker_orders||[]);renderAlerts(d.alerts||[]);(d.indicators||[]).forEach(renderIndicator);
+    }catch(e){}
+  }
+  async function refreshIndicators(){
+    try{const r=await fetch('/api/live/indicators',{cache:'no-store'});if(!r.ok)return;const d=await r.json();if(d.ok)(d.indicators||[]).forEach(renderIndicator);}catch(e){}
+  }
+  refreshFast();setInterval(refreshFast,5000);
+  setTimeout(refreshIndicators,1500);setInterval(refreshIndicators,30000);
+})();
+</script>
+{% endblock %}

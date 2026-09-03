@@ -1,0 +1,5 @@
+105 passed
+compileall PASS
+Jinja 15/15 PASS
+JavaScript syntax PASS
+Chromium responsive widths PASS: 320,360,390,430,768,1024,1280,1440,1920

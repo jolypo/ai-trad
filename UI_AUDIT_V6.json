@@ -1,0 +1,932 @@
+{
+  "summary": {
+    "tests": 108,
+    "failures": 0,
+    "pages": [
+      "home",
+      "about",
+      "pricing",
+      "login",
+      "register",
+      "dashboard",
+      "options",
+      "capital",
+      "portfolio",
+      "reports",
+      "indicators",
+      "admin"
+    ],
+    "viewports": [
+      [
+        320,
+        700
+      ],
+      [
+        360,
+        800
+      ],
+      [
+        390,
+        844
+      ],
+      [
+        430,
+        932
+      ],
+      [
+        768,
+        1024
+      ],
+      [
+        1024,
+        900
+      ],
+      [
+        1280,
+        900
+      ],
+      [
+        1440,
+        1000
+      ],
+      [
+        1920,
+        1080
+      ]
+    ]
+  },
+  "results": [
+    {
+      "page": "home",
+      "w": 320,
+      "h": 700,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "about",
+      "w": 320,
+      "h": 700,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "pricing",
+      "w": 320,
+      "h": 700,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "login",
+      "w": 320,
+      "h": 700,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "register",
+      "w": 320,
+      "h": 700,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "dashboard",
+      "w": 320,
+      "h": 700,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "options",
+      "w": 320,
+      "h": 700,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "capital",
+      "w": 320,
+      "h": 700,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "portfolio",
+      "w": 320,
+      "h": 700,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "reports",
+      "w": 320,
+      "h": 700,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "indicators",
+      "w": 320,
+      "h": 700,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "admin",
+      "w": 320,
+      "h": 700,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "home",
+      "w": 360,
+      "h": 800,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "about",
+      "w": 360,
+      "h": 800,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "pricing",
+      "w": 360,
+      "h": 800,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "login",
+      "w": 360,
+      "h": 800,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "register",
+      "w": 360,
+      "h": 800,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "dashboard",
+      "w": 360,
+      "h": 800,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "options",
+      "w": 360,
+      "h": 800,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "capital",
+      "w": 360,
+      "h": 800,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "portfolio",
+      "w": 360,
+      "h": 800,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "reports",
+      "w": 360,
+      "h": 800,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "indicators",
+      "w": 360,
+      "h": 800,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "admin",
+      "w": 360,
+      "h": 800,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "home",
+      "w": 390,
+      "h": 844,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "about",
+      "w": 390,
+      "h": 844,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "pricing",
+      "w": 390,
+      "h": 844,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "login",
+      "w": 390,
+      "h": 844,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "register",
+      "w": 390,
+      "h": 844,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "dashboard",
+      "w": 390,
+      "h": 844,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "options",
+      "w": 390,
+      "h": 844,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "capital",
+      "w": 390,
+      "h": 844,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "portfolio",
+      "w": 390,
+      "h": 844,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "reports",
+      "w": 390,
+      "h": 844,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "indicators",
+      "w": 390,
+      "h": 844,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "admin",
+      "w": 390,
+      "h": 844,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "home",
+      "w": 430,
+      "h": 932,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "about",
+      "w": 430,
+      "h": 932,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "pricing",
+      "w": 430,
+      "h": 932,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "login",
+      "w": 430,
+      "h": 932,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "register",
+      "w": 430,
+      "h": 932,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "dashboard",
+      "w": 430,
+      "h": 932,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "options",
+      "w": 430,
+      "h": 932,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "capital",
+      "w": 430,
+      "h": 932,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "portfolio",
+      "w": 430,
+      "h": 932,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "reports",
+      "w": 430,
+      "h": 932,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "indicators",
+      "w": 430,
+      "h": 932,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "admin",
+      "w": 430,
+      "h": 932,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "home",
+      "w": 768,
+      "h": 1024,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "about",
+      "w": 768,
+      "h": 1024,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "pricing",
+      "w": 768,
+      "h": 1024,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "login",
+      "w": 768,
+      "h": 1024,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "register",
+      "w": 768,
+      "h": 1024,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "dashboard",
+      "w": 768,
+      "h": 1024,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "options",
+      "w": 768,
+      "h": 1024,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "capital",
+      "w": 768,
+      "h": 1024,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "portfolio",
+      "w": 768,
+      "h": 1024,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "reports",
+      "w": 768,
+      "h": 1024,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "indicators",
+      "w": 768,
+      "h": 1024,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "admin",
+      "w": 768,
+      "h": 1024,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "home",
+      "w": 1024,
+      "h": 900,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "about",
+      "w": 1024,
+      "h": 900,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "pricing",
+      "w": 1024,
+      "h": 900,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "login",
+      "w": 1024,
+      "h": 900,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "register",
+      "w": 1024,
+      "h": 900,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "dashboard",
+      "w": 1024,
+      "h": 900,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "options",
+      "w": 1024,
+      "h": 900,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "capital",
+      "w": 1024,
+      "h": 900,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "portfolio",
+      "w": 1024,
+      "h": 900,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "reports",
+      "w": 1024,
+      "h": 900,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "indicators",
+      "w": 1024,
+      "h": 900,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "admin",
+      "w": 1024,
+      "h": 900,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "home",
+      "w": 1280,
+      "h": 900,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "about",
+      "w": 1280,
+      "h": 900,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "pricing",
+      "w": 1280,
+      "h": 900,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "login",
+      "w": 1280,
+      "h": 900,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "register",
+      "w": 1280,
+      "h": 900,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "dashboard",
+      "w": 1280,
+      "h": 900,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "options",
+      "w": 1280,
+      "h": 900,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "capital",
+      "w": 1280,
+      "h": 900,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "portfolio",
+      "w": 1280,
+      "h": 900,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "reports",
+      "w": 1280,
+      "h": 900,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "indicators",
+      "w": 1280,
+      "h": 900,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "admin",
+      "w": 1280,
+      "h": 900,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "home",
+      "w": 1440,
+      "h": 1000,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "about",
+      "w": 1440,
+      "h": 1000,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "pricing",
+      "w": 1440,
+      "h": 1000,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "login",
+      "w": 1440,
+      "h": 1000,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "register",
+      "w": 1440,
+      "h": 1000,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "dashboard",
+      "w": 1440,
+      "h": 1000,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "options",
+      "w": 1440,
+      "h": 1000,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "capital",
+      "w": 1440,
+      "h": 1000,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "portfolio",
+      "w": 1440,
+      "h": 1000,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "reports",
+      "w": 1440,
+      "h": 1000,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "indicators",
+      "w": 1440,
+      "h": 1000,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "admin",
+      "w": 1440,
+      "h": 1000,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "home",
+      "w": 1920,
+      "h": 1080,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "about",
+      "w": 1920,
+      "h": 1080,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "pricing",
+      "w": 1920,
+      "h": 1080,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "login",
+      "w": 1920,
+      "h": 1080,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "register",
+      "w": 1920,
+      "h": 1080,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "dashboard",
+      "w": 1920,
+      "h": 1080,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "options",
+      "w": 1920,
+      "h": 1080,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "capital",
+      "w": 1920,
+      "h": 1080,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "portfolio",
+      "w": 1920,
+      "h": 1080,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "reports",
+      "w": 1920,
+      "h": 1080,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "indicators",
+      "w": 1920,
+      "h": 1080,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    },
+    {
+      "page": "admin",
+      "w": 1920,
+      "h": 1080,
+      "overflow": false,
+      "menu_ok": true,
+      "js_errors": 0
+    }
+  ],
+  "final_verification": {
+    "pytest": "52/52 PASS",
+    "python_ast": "17/17 PASS",
+    "jinja_parse": "15/15 PASS",
+    "javascript_syntax": "PASS",
+    "secret_scan_findings": 0,
+    "note": "The 108-case responsive matrix remains applicable; final changes after that matrix were backend connection-pool hardening, test isolation, and status translation mappings, with no layout CSS changes."
+  }
+}

@@ -1,0 +1,14 @@
+{% extends 'base.html' %}{% block content %}{% set lang = u.language if u else request.session.get('lang','ar') %}
+<section class="page">
+  <h1>{{ 'كيف يعمل النظام؟' if lang=='ar' else 'How it works' }}</h1>
+  <div class="steps">
+    <article><b>01</b><h3>{{ 'أنشئ حسابك' if lang=='ar' else 'Create your account' }}</h3><p>{{ 'لكل مستخدم حساب، إعدادات، قائمة أسهم، صفقات وتنبيهات مستقلة.' if lang=='ar' else 'Each user has independent settings, allowed symbols, trades, and alerts.' }}</p></article>
+    <article><b>02</b><h3>{{ 'حدد المخاطر والأسهم' if lang=='ar' else 'Set risk and symbols' }}</h3><p>{{ 'حدد رأس المال والخسارة اليومية والمخاطرة لكل صفقة والهدف وعدد الصفقات والأسهم المسموحة.' if lang=='ar' else 'Set capital, daily loss, risk per trade, targets, trade limits, and allowed symbols.' }}</p></article>
+    <article><b>03</b><h3>{{ 'تشغيل' if lang=='ar' else 'Start' }}</h3><p>{{ 'بعد فحص السوق والإعدادات يبدأ المسح الآلي للأسهم المختارة.' if lang=='ar' else 'After market and configuration checks, automated scanning begins.' }}</p></article>
+    <article><b>04</b><h3>{{ 'إيقاف وتقرير' if lang=='ar' else 'Stop & Report' }}</h3><p>{{ 'تُراقب الصفقة حتى الوقف أو الهدف أو حدود الجلسة، ثم تُحفظ النتيجة في لوحة التحكم.' if lang=='ar' else 'Positions are monitored until stop, target, or session limits, then logged to the dashboard.' }}</p></article>
+  </div>
+  <h2>{{ 'محرك التحليل' if lang=='ar' else 'Analysis Engine' }}</h2>
+  <div class="grid3"><article><h3>{{ 'الاتجاه' if lang=='ar' else 'Trend' }}</h3><p>EMA 9 / EMA 20 / EMA 50 + VWAP + ADX 14.</p></article><article><h3>{{ 'الزخم' if lang=='ar' else 'Momentum' }}</h3><p>RSI 14 + MACD 12/26/9 + Momentum 5.</p></article><article><h3>{{ 'التذبذب والحجم' if lang=='ar' else 'Volatility & Volume' }}</h3><p>ATR 14 + RVOL.</p></article></div>
+  <p class="muted">{{ 'درجة الإشارة هي مجموع شروط شفافة وليست احتمال نجاح مضمون. النظام لا يضمن الربح.' if lang=='ar' else 'Signal Score is a transparent rule score, not a guaranteed probability of success. Profit is not guaranteed.' }}</p>
+  <div class="notice">{{ 'النسخة الحالية مخصصة لـAlpaca Paper للاختبار والتحقق قبل أي انتقال للأموال الحقيقية.' if lang=='ar' else 'The current build is Alpaca Paper-first for validation before any real-money deployment.' }}</div>
+</section>{% endblock %}

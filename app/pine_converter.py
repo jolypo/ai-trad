@@ -1,0 +1,129 @@
+from __future__ import annotations
+
+import ast
+import re
+from dataclasses import dataclass
+
+
+UNSUPPORTED_PATTERNS = {
+    "request.security": "Multi-timeframe request.security requires a dedicated data adapter",
+    "strategy.": "TradingView strategy order commands are not imported as broker orders",
+    "array.": "Pine arrays are not supported by the safe converter",
+    "matrix.": "Pine matrices are not supported by the safe converter",
+    "map.": "Pine maps are not supported by the safe converter",
+    "line.": "Drawing objects are display-only and not part of trading logic",
+    "label.": "Drawing labels are display-only and not part of trading logic",
+}
+
+SAFE_TA = {
+    "ta.ema": "ema", "ta.sma": "sma", "ta.rsi": "rsi", "ta.atr": "atr",
+    "ta.crossover": "crossover", "ta.crossunder": "crossunder", "ta.highest": "highest",
+    "ta.lowest": "lowest", "ta.change": "change", "ta.mom": "momentum",
+}
+
+
+@dataclass
+class ConversionResult:
+    status: str
+    progress: int
+    supported_pct: float
+    python_code: str
+    errors: list[str]
+    warnings: list[str]
+
+
+def _clean_expr(expr: str) -> str:
+    expr = expr.strip().rstrip(";")
+    expr = re.sub(r"\bclose\b", "close", expr)
+    expr = re.sub(r"\bopen\b", "open_", expr)
+    expr = re.sub(r"\bhigh\b", "high", expr)
+    expr = re.sub(r"\blow\b", "low", expr)
+    expr = re.sub(r"\bvolume\b", "volume", expr)
+    expr = expr.replace(" and ", " and ").replace(" or ", " or ")
+    expr = expr.replace("true", "True").replace("false", "False")
+    for pine, py in SAFE_TA.items():
+        expr = expr.replace(pine, py)
+    # Pine historical indexing x[1] is intentionally blocked in this first safe importer.
+    if re.search(r"[A-Za-z_]\w*\s*\[\s*\d+\s*\]", expr):
+        raise ValueError("Historical series indexing like value[1] requires review")
+    return expr
+
+
+def convert_pine_to_python(source: str) -> ConversionResult:
+    source = (source or "").replace("\r\n", "\n")
+    if not source.strip():
+        return ConversionResult("ERROR", 100, 0, "", ["Pine source is empty"], [])
+
+    errors: list[str] = []
+    warnings: list[str] = []
+    for pattern, message in UNSUPPORTED_PATTERNS.items():
+        if pattern in source:
+            errors.append(f"{pattern}: {message}")
+
+    lines = source.splitlines()
+    assignments: list[tuple[str, str]] = []
+    signal_expr = None
+    candidate_lines = 0
+    supported_lines = 0
+
+    for raw in lines:
+        line = raw.strip()
+        if not line or line.startswith("//") or line.startswith("indicator(") or line.startswith("strategy(") or line.startswith("//@version"):
+            continue
+        if line.startswith(("plot(", "plotshape(", "hline(", "bgcolor(", "barcolor(")):
+            warnings.append(f"Display instruction skipped: {line[:60]}")
+            continue
+        candidate_lines += 1
+        # typed declaration: float x = ..., bool x = ...
+        line = re.sub(r"^(float|int|bool|string)\s+", "", line)
+        # Pine input helpers become literal defaults when possible.
+        m_input = re.match(r"([A-Za-z_]\w*)\s*=\s*input\.(?:int|float|bool)\(([^,\)]+).*$", line)
+        if m_input:
+            name, default = m_input.groups()
+            try:
+                expr = _clean_expr(default)
+                ast.parse(expr, mode="eval")
+                assignments.append((name, expr)); supported_lines += 1
+            except Exception as exc:
+                errors.append(f"{name}: unsupported input default ({exc})")
+            continue
+        m = re.match(r"([A-Za-z_]\w*)\s*:?=\s*(.+)$", line)
+        if m:
+            name, expr_raw = m.groups()
+            try:
+                expr = _clean_expr(expr_raw)
+                # Tuple MACD assignment is not safely flattened yet.
+                if expr.startswith("ta.macd") or name.startswith("["):
+                    raise ValueError("MACD tuple assignment needs manual mapping")
+                ast.parse(expr, mode="eval")
+                assignments.append((name, expr)); supported_lines += 1
+                if name.lower() in {"signal", "longcondition", "long_signal", "buy", "entrysignal"}:
+                    signal_expr = name
+            except Exception as exc:
+                errors.append(f"{name}: {exc}")
+            continue
+        errors.append(f"Unsupported statement: {line[:100]}")
+
+    supported_pct = 100.0 if candidate_lines == 0 else round((supported_lines / candidate_lines) * 100, 1)
+    if not signal_expr:
+        # Infer a conservative signal only when a boolean-looking named variable exists.
+        for name, _ in reversed(assignments):
+            if any(k in name.lower() for k in ("signal", "condition", "bull", "long")):
+                signal_expr = name; break
+        if not signal_expr:
+            warnings.append("No explicit signal/longCondition variable found; imported indicator remains display/test-only")
+
+    py = '''from __future__ import annotations\n\n# Generated by Luqman Trade safe Pine importer.\n# This module is data-only: no file/network/broker access is generated.\n\ndef sma(x, n):\n    n=max(1,int(n)); return sum(x[-n:])/min(len(x),n) if x else 0.0\ndef ema(x, n):\n    n=max(1,int(n)); a=2/(n+1); v=float(x[0]) if x else 0.0\n    for z in x[1:]: v=a*float(z)+(1-a)*v\n    return v\ndef rsi(x, n=14):\n    n=max(1,int(n)); d=[float(x[i])-float(x[i-1]) for i in range(1,len(x))][-n:]\n    if not d: return 50.0\n    g=sum(max(z,0) for z in d)/len(d); l=sum(max(-z,0) for z in d)/len(d)\n    return 100.0 if l==0 else 100-(100/(1+g/l))\ndef atr(high, low, close, n=14):\n    if len(close)<2: return 0.0\n    tr=[max(high[i]-low[i],abs(high[i]-close[i-1]),abs(low[i]-close[i-1])) for i in range(1,len(close))]\n    return sma(tr,n)\ndef highest(x,n): return max(x[-max(1,int(n)):]) if x else 0.0\ndef lowest(x,n): return min(x[-max(1,int(n)):]) if x else 0.0\ndef change(x): return (x[-1]-x[-2]) if len(x)>1 else 0.0\ndef momentum(x,n=5): return ((x[-1]/x[-1-int(n)]-1)*100) if len(x)>int(n) and x[-1-int(n)] else 0.0\ndef crossover(a,b): return bool(a>b)\ndef crossunder(a,b): return bool(a<b)\n\ndef evaluate(bars):\n    close=[float(b.get("c",0)) for b in bars]\n    open_=[float(b.get("o",0)) for b in bars]\n    high=[float(b.get("h",0)) for b in bars]\n    low=[float(b.get("l",0)) for b in bars]\n    volume=[float(b.get("v",0)) for b in bars]\n'''
+    for name, expr in assignments:
+        py += f"    {name} = {expr}\n"
+    py += f"    return {{'signal': bool({signal_expr}) if close else False, 'values': {{k:v for k,v in locals().items() if k not in {{'bars','close','open_','high','low','volume'}} and isinstance(v,(int,float,bool))}}}}\n" if signal_expr else "    return {'signal': False, 'values': {}}\n"
+
+    try:
+        compile(py, "<luqman-pine-import>", "exec")
+    except SyntaxError as exc:
+        errors.append(f"Generated Python syntax error line {exc.lineno}: {exc.msg}")
+
+    if not signal_expr:
+        errors.append("No explicit signal/longCondition variable was found; trading activation requires review")
+    status = "COMPLETE" if not errors and supported_pct >= 99.9 else ("NEEDS_REVIEW" if py else "ERROR")
+    return ConversionResult(status, 100, supported_pct, py, errors, warnings)

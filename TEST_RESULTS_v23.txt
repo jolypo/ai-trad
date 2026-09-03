@@ -1,0 +1,13 @@
+Luqman Trade v23 Verification
+=============================
+pytest: 114 passed
+Python compileall: PASS
+Jinja parse: 15/15 PASS
+JavaScript syntax check (charts.js): PASS
+Key v23 scenario: PASS
+  Target total: $2,000
+  Stocks target/current start: $1,000 / $1,000
+  Options target/current start: $1,000 / $1,000
+  Stock realized loss: -$2.50
+  Result: Stocks current $997.50; Options current $1,000.00; Total current $1,997.50
+  Daily rollover: balances unchanged

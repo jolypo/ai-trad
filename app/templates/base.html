@@ -1,0 +1,186 @@
+<!doctype html>
+{% set lang = u.language if u else request.session.get("lang","ar") %}
+<html lang="{{ lang }}" dir="{{ 'ltr' if lang=='en' else 'rtl' }}" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07110d">
+  <title>{% block title %}Luqman Trade{% endblock %}</title>
+  <link rel="icon" type="image/png" href="/static/favicon.png">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="{{ 'app-shell-body' if u else 'public-body' }}">
+{% if u %}
+<div id="sidebar-backdrop" class="sidebar-backdrop" hidden></div>
+<aside id="app-sidebar" class="app-sidebar" aria-label="{{ 'القائمة الرئيسية' if lang=='ar' else 'Main navigation' }}">
+  <div class="sidebar-brand-row">
+    <div class="sidebar-brand">
+      <a class="brand" href="/dashboard">Luqman <span>Trade</span></a>
+      <small>{{ 'منصة التداول' if lang=='ar' else 'Trading Workspace' }}</small>
+    </div>
+    <button id="sidebar-close" class="sidebar-close" type="button" aria-label="{{ 'إغلاق القائمة' if lang=='ar' else 'Close menu' }}">×</button>
+  </div>
+
+  <nav class="side-nav">
+    <details class="nav-group" data-nav-key="trading">
+      <summary><span class="nav-icon">↗</span><span>{{ 'التداول' if lang=='ar' else 'Trading' }}</span><span class="chev">⌄</span></summary>
+      <div class="nav-children">
+        <a class="{{ 'active' if request.url.path=='/dashboard' else '' }}" href="/dashboard"><span class="nav-child-icon">▦</span><span>{{ 'تداول الأسهم' if lang=='ar' else 'Stock Trading' }}</span></a>
+        <a class="{{ 'active' if request.url.path.startswith('/options') else '' }}" href="/options"><span class="nav-child-icon">◈</span><span>{{ 'تداول العقود' if lang=='ar' else 'Options Trading' }}</span></a>
+      </div>
+    </details>
+
+    <details class="nav-group" data-nav-key="mydata">
+      <summary><span class="nav-icon">◎</span><span>{{ 'بياناتي' if lang=='ar' else 'My Data' }}</span><span class="chev">⌄</span></summary>
+      <div class="nav-children">
+        <a class="{{ 'active' if request.url.path=='/portfolio' else '' }}" href="/portfolio"><span class="nav-child-icon">◒</span><span>{{ 'المحفظة' if lang=='ar' else 'Portfolio' }}</span></a>
+        <a class="{{ 'active' if request.url.path=='/reports' else '' }}" href="/reports"><span class="nav-child-icon">▤</span><span>{{ 'التقارير' if lang=='ar' else 'Reports' }}</span></a>
+        <a class="{{ 'active' if request.url.path=='/capital' else '' }}" href="/capital"><span class="nav-child-icon">◉</span><span>{{ 'التحكم برأس المال' if lang=='ar' else 'Capital Control' }}</span></a>
+      </div>
+    </details>
+
+    <a class="side-link {{ 'active' if request.url.path.startswith('/indicators') else '' }}" href="/indicators"><span class="nav-icon">⌁</span><span>{{ 'إضافة المؤشرات' if lang=='ar' else 'Indicator Studio' }}</span></a>
+    {% if u.is_admin %}<a class="side-link {{ 'active' if request.url.path=='/admin' else '' }}" href="/admin"><span class="nav-icon">⚙</span><span>{{ 'لوحة التحكم' if lang=='ar' else 'Control Panel' }}</span></a>{% endif %}
+    <a class="side-link {{ 'active' if request.url.path=='/about' else '' }}" href="/about"><span class="nav-icon">ⓘ</span><span>{{ 'عن النظام' if lang=='ar' else 'About System' }}</span></a>
+  </nav>
+
+  <div class="sidebar-spacer"></div>
+  <div class="sidebar-tools">
+    <div class="language-mini" aria-label="{{ 'اللغة' if lang=='ar' else 'Language' }}">
+      <a class="{{'active' if lang=='ar' else ''}}" href="/language/ar">ع</a>
+      <a class="{{'active' if lang=='en' else ''}}" href="/language/en">EN</a>
+    </div>
+    <button id="theme-toggle" class="side-tool" type="button"><span class="nav-icon">◐</span><span data-theme-label>{{ 'الوضع الداكن' if lang=='ar' else 'Dark mode' }}</span></button>
+    <a class="side-tool logout-link" href="/logout"><span class="nav-icon">↪</span><span>{{ 'تسجيل الخروج' if lang=='ar' else 'Logout' }}</span></a>
+  </div>
+</aside>
+
+<div class="app-frame">
+  <header class="app-topbar">
+    <div class="topbar-start">
+      <button id="sidebar-toggle" class="mobile-menu-btn" type="button" aria-label="{{ 'فتح القائمة' if lang=='ar' else 'Open menu' }}" aria-controls="app-sidebar" aria-expanded="false"><span></span><span></span><span></span></button>
+      <div class="topbar-title"><b>Luqman Trade</b><span class="topbar-path">{% block page_label %}{{ 'منصة التداول' if lang=='ar' else 'Trading Workspace' }}{% endblock %}</span></div>
+    </div>
+    <div class="topbar-user"><span class="status-dot"></span><span>{{u.name}}</span></div>
+  </header>
+  <main class="app-main">
+  {% if flash %}<div id="global-toast" class="global-toast {{flash.kind}}" role="status" aria-live="polite"><span class="toast-dot"></span><span>{{flash.message}}</span><button type="button" aria-label="{{ 'إغلاق الإشعار' if lang=='ar' else 'Close notification' }}">×</button></div>{% endif %}
+{% else %}
+<header class="public-header">
+  <nav class="public-nav">
+    <a class="brand" href="/">Luqman <span>Trade</span></a>
+    <div class="public-nav-links">
+      <a href="/about">{{ 'النظام' if lang=='ar' else 'System' }}</a>
+      <a href="/pricing">{{ 'الباقات' if lang=='ar' else 'Plans' }}</a>
+      <span class="lang-switch"><a class="{{ 'active' if lang=='ar' else '' }}" href="/language/ar">العربية</a><a class="{{ 'active' if lang=='en' else '' }}" href="/language/en">English</a></span>
+      <a href="/login">{{ 'دخول' if lang=='ar' else 'Login' }}</a>
+      <a class="btn" href="/register">{{ 'تسجيل' if lang=='ar' else 'Register' }}</a>
+    </div>
+  </nav>
+</header>
+<main class="public-main">
+{% if flash %}<div id="global-toast" class="global-toast {{flash.kind}}" role="status" aria-live="polite"><span class="toast-dot"></span><span>{{flash.message}}</span><button type="button" aria-label="Close">×</button></div>{% endif %}
+{% endif %}
+{% block content %}{% endblock %}
+</main>
+{% if u %}
+  <footer class="app-footer">© 2026 Luqman Trade — {{ 'تداول آلي · وضع Paper أولاً' if lang=='ar' else 'Automated trading · Paper-first' }}</footer>
+</div>
+{% endif %}
+{% block scripts %}{% endblock %}
+{% if u %}
+<script>
+(()=>{
+  const root=document.documentElement;
+  const body=document.body;
+  const openBtn=document.getElementById('sidebar-toggle');
+  const closeBtn=document.getElementById('sidebar-close');
+  const side=document.getElementById('app-sidebar');
+  const back=document.getElementById('sidebar-backdrop');
+  const themeBtn=document.getElementById('theme-toggle');
+  const mobile=()=>window.matchMedia('(max-width: 1023px)').matches;
+  const store={get:(k)=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+  const close=()=>{
+    side?.classList.remove('open');
+    if(back) back.hidden=true;
+    openBtn?.setAttribute('aria-expanded','false');
+    body.classList.remove('sidebar-open');
+  };
+  const open=()=>{
+    if(!mobile()) return;
+    side?.classList.add('open');
+    if(back) back.hidden=false;
+    openBtn?.setAttribute('aria-expanded','true');
+    body.classList.add('sidebar-open');
+  };
+  openBtn?.addEventListener('click',()=>side?.classList.contains('open')?close():open());
+  closeBtn?.addEventListener('click',close);
+  back?.addEventListener('click',close);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape') close()});
+  document.querySelectorAll('.app-sidebar a').forEach(a=>a.addEventListener('click',()=>{if(mobile())close()}));
+  window.addEventListener('resize',()=>{if(!mobile())close()},{passive:true});
+
+  // Desktop navigation groups start closed on a new browser profile, then remember
+  // the user's explicit open/closed choice across refreshes.
+  document.querySelectorAll('.nav-group[data-nav-key]').forEach(group=>{
+    const key='lt-nav-'+group.dataset.navKey;
+    const savedState=store.get(key);
+    group.open=savedState==='open';
+    group.addEventListener('toggle',()=>store.set(key,group.open?'open':'closed'));
+  });
+
+  const saved=store.get('lt-theme')||'dark';
+  root.dataset.theme=saved;
+  const sync=()=>{
+    const label=themeBtn?.querySelector('[data-theme-label]');
+    if(!label)return;
+    const isDark=root.dataset.theme==='dark';
+    label.textContent=root.lang==='ar'?(isDark?'الوضع الداكن':'الوضع الفاتح'):(isDark?'Dark mode':'Light mode');
+  };
+  sync();
+  themeBtn?.addEventListener('click',()=>{
+    root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';
+    store.set('lt-theme',root.dataset.theme);
+    sync();
+  });
+  const toast=document.getElementById('global-toast');
+  if(toast){
+    const dismiss=()=>toast.classList.add('toast-hide');
+    toast.querySelector('button')?.addEventListener('click',dismiss);
+    window.setTimeout(dismiss,5200);
+  }
+})();
+</script>
+{% endif %}
+{% if u %}
+<script>
+(()=>{
+  const safeSession={get:k=>{try{return sessionStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{sessionStorage.setItem(k,v)}catch(e){}}};
+  window.LTNotify=(message,kind='info')=>{
+    const old=document.getElementById('live-action-toast');if(old)old.remove();
+    const el=document.createElement('div');el.id='live-action-toast';el.className='global-toast '+kind;el.setAttribute('role','status');
+    el.innerHTML='<span class="toast-dot"></span><span></span><button type="button" aria-label="Close">×</button>';
+    el.querySelector('span:nth-child(2)').textContent=message;document.body.appendChild(el);
+    const dismiss=()=>el.classList.add('toast-hide');el.querySelector('button').addEventListener('click',dismiss);setTimeout(dismiss,5200);setTimeout(()=>el.remove(),5600);
+  };
+  let initialized=false;
+  async function poll(){try{const r=await fetch('/api/live/alert/latest',{cache:'no-store'});if(!r.ok)return;const d=await r.json();const a=d.alert;if(!a)return;const key='lt-last-alert';const last=safeSession.get(key);if(!initialized){safeSession.set(key,String(a.id));initialized=true;return;}if(String(a.id)!==String(last)){safeSession.set(key,String(a.id));window.LTNotify((a.title? a.title+' — ':'')+(a.body||''),'info');}}catch(e){}}
+  setTimeout(()=>{poll();setInterval(poll,8000)},1200);
+})();
+</script>
+{% endif %}
+<script>
+(()=>{
+  const digitMap={'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9','۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9'};
+  const normalizeText=t=>t.replace(/[٠-٩۰-۹]/g,d=>digitMap[d]||d).replace(/\$(?=\S)/g,'$ ');
+  const normalizeNode=node=>{
+    if(node.nodeType===Node.TEXT_NODE){const v=normalizeText(node.nodeValue||'');if(v!==node.nodeValue)node.nodeValue=v;return;}
+    if(node.nodeType!==Node.ELEMENT_NODE||['SCRIPT','STYLE','TEXTAREA'].includes(node.tagName))return;
+    node.childNodes.forEach(normalizeNode);
+  };
+  normalizeNode(document.body);
+  new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(normalizeNode))).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'مؤشرات السوق' if u.language=='ar' else 'Index Trading' }} · Luqman Trade{% endblock %}
+{% block content %}
+<section class="page dashboard-page">
+<div class="dashhead">
+    <div>
+      <div class="statusline">
+        <span class="pill {{ 'live' if s.index_bot_active else 'secondary' }}">{{ ('بوت المؤشرات نشط' if s.index_bot_active else 'بوت المؤشرات متوقف') if u.language=='ar' else ('INDEX BOT ACTIVE' if s.index_bot_active else 'INDEX BOT OFF') }}</span>
+        <span class="pill {{ 'live' if market_open else 'secondary' }}">{{ ('السوق مفتوح' if market_open else 'السوق مغلق') if u.language=='ar' else ('MARKET OPEN' if market_open else 'MARKET CLOSED') }}</span>
+      </div>
+      <h1>{{ 'لوحة المؤشرات والأصول' if u.language=='ar' else 'Index & ETF Dashboard' }}</h1>
+      <p class="muted">{{ 'لوحة منفصلة للمؤشرات وETF مع نفس محرك رأس المال الموحد للمشروع.' if u.language=='ar' else 'A dedicated index/ETF workspace sharing the same unified capital engine.' }}</p>
+    </div>
+    <div class="session-actions">
+      <form method="post" action="/indexes/start"><button class="btn" {% if s.index_bot_active or s.locked %}disabled{% endif %}>{{ '▶ تشغيل بوت المؤشرات' if u.language=='ar' else '▶ START INDEX BOT' }}</button></form>
+      <form method="post" action="/indexes/stop"><input type="hidden" name="close_positions" value="off"><button class="danger" {% if not s.index_bot_active %}disabled{% endif %}>{{ '■ إيقاف' if u.language=='ar' else '■ STOP' }}</button></form>
+    </div>
+  </div>
+
+  <section class="account-grid">
+    <div class="metric hero-metric"><small>{{ 'رأس المال المخصص' if u.language=='ar' else 'Allocated Capital' }}</small><b>${{'%.2f'|format(capital_budget.allocated)}}</b></div>
+    <div class="metric"><small>{{ 'المستثمر حاليًا' if u.language=='ar' else 'Invested' }}</small><b>${{'%.2f'|format(capital_budget.invested)}}</b></div>
+    <div class="metric"><small>{{ 'محجوز للأوامر' if u.language=='ar' else 'Reserved' }}</small><b>${{'%.2f'|format(capital_budget.reserved)}}</b></div>
+    <div class="metric"><small>{{ 'متاح للتداول' if u.language=='ar' else 'Available to Trade' }}</small><b>${{'%.2f'|format(capital_budget.available)}}</b></div>
+    <div class="metric"><small>{{ 'احتياطي نقدي' if u.language=='ar' else 'Cash Reserve' }}</small><b>${{'%.2f'|format(capital_budget.reserve)}}</b></div>
+  </section>
+
+  <article>
+    <div class="cardhead"><div><h2>{{ 'الأصول المفعلة' if u.language=='ar' else 'Enabled Instruments' }}</h2><p class="muted">{{ 'QQQ قابل للتنفيذ كـETF. SPX يظهر للتحليل ويظل تنفيذ عقوده مقفلاً حتى يتحقق دعم العقد لدى الوسيط.' if u.language=='ar' else 'QQQ is executable as an ETF. SPX remains analytics-only until broker contract support is verified.' }}</p></div></div>
+    <form method="post" action="/indexes/settings" class="stockgrid index-selector">
+      {% for sym,cfg in products.items() %}<label class="stockchip"><input type="checkbox" name="symbols" value="{{sym}}" {% if sym in selected_indexes %}checked{% endif %}><b>{{sym}}</b> — {{ cfg.label_ar if u.language=='ar' else cfg.label_en }}</label>{% endfor %}
+      <button class="btn">{{ 'حفظ الأصول' if u.language=='ar' else 'Save Instruments' }}</button>
+    </form>
+  </article>
+
+  <div class="indicator-grid">
+    {% for x in rows %}
+    <article class="indicator-card {{ 'qualified' if x.qualified else '' }}">
+      <div class="indicator-top"><div><b class="ticker">{{x.symbol}}</b><span>${{'%.2f'|format(x.price)}}</span></div><span class="verdict {{x.verdict|lower}}">{{code_label(x.verdict,u.language)}}</span></div>
+      <div class="scorebar"><i style="width:{{ [x.score,100]|min }}%"></i></div>
+      <div class="scoreline"><strong>{{'%.0f'|format(x.score)}}/100</strong><small>{{ 'درجة الإشارة' if u.language=='ar' else 'Signal Score' }}</small></div>
+      <div class="indicator-values"><span>RSI <b>{{'%.1f'|format(x.rsi14)}}</b></span><span>ADX <b>{{'%.1f'|format(x.adx14)}}</b></span><span>RVOL <b>{{'%.2f'|format(x.rel_volume)}}x</b></span><span>VWAP <b>${{'%.2f'|format(x.vwap)}}</b></span></div>
+      <p class="micro">{{ x.execution_note_ar if u.language=='ar' else x.execution_note_en }}</p>
+    </article>
+    {% else %}<article class="empty">{{ 'لا توجد بيانات مؤشرات الآن.' if u.language=='ar' else 'No index data available right now.' }}</article>{% endfor %}
+  </div>
+
+  <article class="positions-card">
+    <h2>{{ 'سجل صفقات محرك المؤشرات' if u.language=='ar' else 'Index Engine Trade Ledger' }}</h2>
+    <div class="table"><table><tr><th>{{ 'الرمز' if u.language=='ar' else 'Symbol' }}</th><th>{{ 'الحالة' if u.language=='ar' else 'Status' }}</th><th>{{ 'الكمية' if u.language=='ar' else 'Qty' }}</th><th>{{ 'الدخول' if u.language=='ar' else 'Entry' }}</th><th>{{ 'السبب' if u.language=='ar' else 'Reason' }}</th></tr>{% for t in index_trades %}<tr><td>{{t.symbol}}</td><td>{{code_label(t.status,u.language)}}</td><td>{{'%.6f'|format(t.qty)}}</td><td>${{'%.2f'|format(t.entry)}}</td><td>{{code_label(t.reason,u.language)}}</td></tr>{% else %}<tr><td colspan="5" class="empty">{{ 'لا توجد صفقات من محرك المؤشرات بعد.' if u.language=='ar' else 'No index-engine trades yet.' }}</td></tr>{% endfor %}</table></div>
+  </article>
+</section>
+{% endblock %}

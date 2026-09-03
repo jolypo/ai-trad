@@ -1,0 +1,21 @@
+Luqman Trade v15 final local verification
+
+pytest -q
+76 passed in 26.41s
+
+python -m compileall -q app tests
+PASS
+
+Jinja parse
+15/15 templates PASS
+
+JavaScript static syntax
+12 non-Jinja inline script blocks PASS
+
+Key v15 regression scenarios
+PASS - $500 current capital + 10/90 allocation => $50 stocks / $450 options
+PASS - Stock stop leaves option trade open
+PASS - Options scheduler independent from stock scheduler
+PASS - Options scheduled stop independent from stock start mode
+
+External integrations requiring deployed Alpaca Paper/Render are documented as NOT TESTABLE LOCALLY in FINAL_CHECKLIST.md.

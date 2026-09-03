@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'تعديل المؤشر' if u.language=='ar' else 'Edit Indicator' }} · Luqman Trade{% endblock %}
+{% block page_label %}{{ 'إضافة المؤشرات / تعديل' if u.language=='ar' else 'Indicator Studio / Edit' }}{% endblock %}
+{% block content %}
+<section class="page"><div class="dashhead"><div><h1>{{ 'تعديل المؤشر' if u.language=='ar' else 'Edit Indicator' }}</h1><p class="muted">{{ 'أي تعديل على Pine يعيد التحويل والفحص قبل السماح للمؤشر بالتأثير على التداول.' if u.language=='ar' else 'Any Pine edit is re-converted and validated before it can affect trading.' }}</p></div><a class="ghost" href="/indicators">{{ 'رجوع' if u.language=='ar' else 'Back' }}</a></div>
+<article><form method="post" enctype="multipart/form-data" class="form-grid">
+<label>{{ 'اسم المؤشر' if u.language=='ar' else 'Indicator Name' }}<input name="name" value="{{row.name}}" required></label>
+<label>{{ 'نوع المصدر' if u.language=='ar' else 'Source Type' }}<select name="source_type"><option value="pine_reference" {% if row.source_type=='pine_reference' %}selected{% endif %}>TradingView / Pine Script</option><option value="luqman_native" {% if row.source_type=='luqman_native' %}selected{% endif %}>Luqman Native</option><option value="manual_rules" {% if row.source_type=='manual_rules' %}selected{% endif %}>{{ 'قواعد يدوية' if u.language=='ar' else 'Manual Rules' }}</option></select></label>
+<label>{{ 'الدور' if u.language=='ar' else 'Role' }}<select name="role"><option value="display" {% if row.role=='display' %}selected{% endif %}>{{ 'عرض فقط' if u.language=='ar' else 'Display only' }}</option><option value="confirm" {% if row.role=='confirm' %}selected{% endif %}>{{ 'تأكيد الإشارة' if u.language=='ar' else 'Signal confirmation' }}</option><option value="filter" {% if row.role=='filter' %}selected{% endif %}>{{ 'فلتر دخول' if u.language=='ar' else 'Entry filter' }}</option></select></label>
+<label>{{ 'وزن المؤشر' if u.language=='ar' else 'Score Weight' }}<input type="number" name="weight" min="0" max="100" value="{{row.weight}}"></label>
+<label>{{ 'الإطار الزمني' if u.language=='ar' else 'Timeframe' }}<select name="timeframe">{% for tf in ['1m','5m','15m','1h','1d'] %}<option {% if row.timeframe==tf %}selected{% endif %}>{{tf}}</option>{% endfor %}</select></label>
+<label>{{ 'استبدال ملف Pine' if u.language=='ar' else 'Replace Pine File' }}<input type="file" name="pine_file" accept=".pine,.txt,text/plain"></label>
+<label class="wide">{{ 'الأصول' if u.language=='ar' else 'Symbols / Indices' }}<div class="stockgrid">{% for x in watch %}<label class="stockchip"><input type="checkbox" name="symbols" value="{{x}}" {% if x in selected_symbols %}checked{% endif %}><b>{{x}}</b></label>{% endfor %}</div><small>{{ 'اتركها بدون تحديد ليعمل على الكل.' if u.language=='ar' else 'Leave empty to apply to all.' }}</small></label>
+<label class="wide">Pine Script<textarea name="source_code" rows="18">{{row.source_code}}</textarea></label>
+<label class="form-switch"><input type="checkbox" name="enabled" {% if row.enabled %}checked{% endif %}> {{ 'مفعّل' if u.language=='ar' else 'Enabled' }}</label>
+<div class="full"><button class="btn">{{ 'حفظ وإعادة الفحص' if u.language=='ar' else 'Save & Revalidate' }}</button></div>
+</form></article></section>
+{% endblock %}
